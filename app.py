@@ -55,9 +55,21 @@ def init_db():
             admin.set_password("admin123")
             db.session.add(admin)
             db.session.commit()
+            print("Base de datos inicializada correctamente")
 
-if not os.path.exists("multitools.db"):
-    init_db()
+# Inicializar BD al arrancar
+with app.app_context():
+    try:
+        db.create_all()
+        admin = User.query.filter_by(username="admin").first()
+        if not admin:
+            admin = User(username="admin", email="admin@multitools.com", is_admin=True)
+            admin.set_password("admin123")
+            db.session.add(admin)
+            db.session.commit()
+            print("✓ Admin creado: admin/admin123")
+    except Exception as e:
+        print(f"Error inicializando BD: {e}")
 
 # AUTENTICACIÓN
 @app.route("/login", methods=["GET", "POST"])
@@ -407,7 +419,7 @@ def ssl_check_api():
     except socket.gaierror:
         return jsonify({"success": False, "error": f"No se pudo resolver el nombre de host: {hostname}"}), 404
     except ssl.SSLCertVerificationError as e:
-        return jsonify({"success": False, "error": f"Error de verificación: {getattr(e, 'reason', str(e))}"}), 400
+        return jsonify({"success": False, "error": f"Error de verificación: {str(e)}"}), 400
     except ssl.SSLError as e:
         return jsonify({"success": False, "error": f"Error de SSL: {str(e)}"}), 400
     except Exception as e:
@@ -576,7 +588,12 @@ def dns_lookup_api():
             elif record_type == "CNAME":
                 recs.append({"value": str(r.target).rstrip(".")})
             elif record_type == "TXT":
-                recs.append({"value": " ".join([s.decode() if isinstance(s, bytes) else str(s) for s in r.strings])})
+                txt_value = ""
+                if hasattr(r, 'strings'):
+                    txt_value = " ".join([s.decode('utf-8') if isinstance(s, bytes) else str(s) for s in r.strings])
+                else:
+                    txt_value = str(r)
+                recs.append({"value": txt_value})
             elif record_type == "NS":
                 recs.append({"value": str(r.target).rstrip(".")})
             elif record_type == "MX":
@@ -642,8 +659,17 @@ def spf_check_api():
     try:
         domain = _clean_domain((request.form.get("domain") or "").strip())
         answers = _resolver().resolve(domain, "TXT")
-        spf = [b" ".join(r.strings).decode() if hasattr(r, "strings") else str(r) for r in answers
-               if (hasattr(r, "strings") and b"v=spf1" in r.strings) or ("v=spf1" in str(r))]
+        spf = []
+        for r in answers:
+            txt_str = ""
+            if hasattr(r, 'strings'):
+                txt_str = " ".join([s.decode('utf-8') if isinstance(s, bytes) else str(s) for s in r.strings])
+                if "v=spf1" in txt_str:
+                    spf.append(txt_str)
+            else:
+                txt_str = str(r)
+                if "v=spf1" in txt_str:
+                    spf.append(txt_str)
         if not spf:
             return jsonify({"success": False, "error": "Sin registro SPF"}), 404
         return jsonify({"success": True, "domain": domain, "records": spf, "total": len(spf)})
@@ -666,7 +692,13 @@ def dkim_check_api():
         selector = (request.form.get("selector") or "default").strip()
         qname = f"{selector}._domainkey.{domain}".rstrip(".")
         answers = _resolver().resolve(qname, "TXT")
-        txt = [" ".join([s.decode() if isinstance(s, bytes) else str(s) for s in r.strings]) for r in answers]
+        txt = []
+        for r in answers:
+            if hasattr(r, 'strings'):
+                txt_value = " ".join([s.decode('utf-8') if isinstance(s, bytes) else str(s) for s in r.strings])
+                txt.append(txt_value)
+            else:
+                txt.append(str(r))
         return jsonify({"success": True, "domain": domain, "selector": selector, "records": txt, "total": len(txt)})
     except dns.resolver.NXDOMAIN:
         return jsonify({"success": False, "error": "Selector/Dominio no existe"}), 404
@@ -686,7 +718,13 @@ def dmarc_check_api():
         domain = _clean_domain((request.form.get("domain") or "").strip())
         qname = f"_dmarc.{domain}"
         answers = _resolver().resolve(qname, "TXT")
-        pol = [" ".join([s.decode() if isinstance(s, bytes) else str(s) for s in r.strings]) for r in answers if hasattr(r, "strings")]
+        pol = []
+        for r in answers:
+            if hasattr(r, 'strings'):
+                txt_value = " ".join([s.decode('utf-8') if isinstance(s, bytes) else str(s) for s in r.strings])
+                pol.append(txt_value)
+            else:
+                pol.append(str(r))
         if not pol:
             return jsonify({"success": False, "error": "Sin política DMARC"}), 404
         return jsonify({"success": True, "domain": domain, "records": pol, "total": len(pol)})
@@ -724,5 +762,21 @@ def email_header_api():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
+# Error handlers
+@app.errorhandler(404)
+def not_found(e):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def internal_error(e):
+    db.session.rollback()
+    return render_template('500.html'), 500
+
 if __name__ == "__main__":
+    print("=" * 50)
+    print("🚀 Iniciando Flask Multi-Herramientas")
+    print("=" * 50)
+    print(f"📍 URL: http://127.0.0.1:5000")
+    print(f"👤 Admin: admin / admin123")
+    print("=" * 50)
     app.run(debug=True, host="0.0.0.0", port=5000)
