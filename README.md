@@ -1,9 +1,10 @@
 # Multi-Herramientas Flask
 
-Este es un proyecto Flask que proporciona una colección de herramientas web categorizadas en PDF/Imágenes, Red y Seguridad. La aplicación está diseñada para ser modular y fácil de extender.
+Este es un proyecto Flask que proporciona una colección de herramientas web categorizadas en PDF/Imágenes, Red y Seguridad. La aplicación está diseñada para ser de acceso público, modular y fácil de extender.
 
 ## Características
 
+- **Acceso Público**: Todas las herramientas son de acceso libre y no requieren inicio de sesión.
 - **Herramientas de PDF e Imágenes**:
   - Convertir Markdown a PDF
   - Comprimir PDF
@@ -11,17 +12,19 @@ Este es un proyecto Flask que proporciona una colección de herramientas web cat
   - Dividir un PDF extrayendo páginas específicas
   - Convertir imágenes a PDF
   - Comprimir imágenes
-- **Herramientas de Red**:
-  - **IP WHOIS**: Consulta información de registro para una dirección IP.
-  - **Blacklist Check**: Verifica si una IP está en las listas negras de spam más comunes.
+- **Herramientas de Red y Correo**:
+  - Búsquedas WHOIS, DNS, MX, y DNS inversa.
+  - Verificación de registros SPF, DKIM, y DMARC.
+  - Análisis de cabeceras de correo electrónico.
 - **Herramientas de Seguridad**:
   - **SSL Check**: Analiza el certificado SSL de un dominio.
   - **Port Scanner**: Escanea los puertos abiertos más comunes de un host.
   - **HTTP Headers**: Muestra las cabeceras de respuesta de una URL.
   - **Password Generator**: Crea contraseñas seguras y personalizables.
-- **Sistema de Autenticación**:
-  - Registro e inicio de sesión de usuarios.
-  - Panel de administración para gestionar usuarios.
+  - **Blacklist Check**: Verifica si una IP está en las listas negras de spam.
+- **Sistema de Autenticación (Opcional)**:
+  - Registro e inicio de sesión de usuarios para futuras funcionalidades personalizadas.
+  - Panel de administración para gestionar usuarios (ruta `/admin` protegida).
 
 ## Requisitos
 
@@ -55,17 +58,23 @@ Este es un proyecto Flask que proporciona una colección de herramientas web cat
 
 ## Ejecución
 
-1.  **Inicializa la base de datos**:
-    La base de datos (`multitools.db`) se creará automáticamente la primera vez que ejecutes la aplicación. Se creará un usuario administrador por defecto:
-    - **Usuario**: `admin`
-    - **Contraseña**: `admin123`
-
-2.  **Inicia la aplicación Flask**:
+1.  **Inicia la aplicación Flask**:
     ```bash
     python app.py
     ```
+    La base de datos (`multitools.db`) se creará automáticamente la primera vez que ejecutes la aplicación, junto con un usuario administrador por defecto:
+    - **Usuario**: `admin`
+    - **Contraseña**: `admin123`
 
-3.  Abre tu navegador y ve a `http://127.0.0.1:5000`.
+2.  Abre tu navegador y ve a `http://127.0.0.1:5000`.
+
+## Pruebas
+
+Para asegurar la calidad y el correcto funcionamiento de la aplicación, puedes ejecutar la suite de pruebas:
+
+```bash
+python test_app.py
+```
 
 ## Tabla de Rutas
 
@@ -75,7 +84,7 @@ Este es un proyecto Flask que proporciona una colección de herramientas web cat
 | `/login`               | `GET,POST`| Página de inicio de sesión.                       | Público   |
 | `/register`            | `GET,POST`| Página de registro de nuevos usuarios.            | Público   |
 | `/logout`              | `GET`     | Cierra la sesión del usuario actual.              | Requiere Login |
-| `/admin`               | `GET`     | Panel de administración.                          | Admin     |
+| `/admin`               | `GET`     | Panel de administración (funcionalidad futura).   | Admin     |
 | `/md-to-pdf`           | `GET`     | Herramienta de Markdown a PDF.                    | Público   |
 | `/compress-pdf`        | `GET`     | Herramienta para comprimir PDF.                   | Público   |
 | `/merge-pdf`           | `GET`     | Herramienta para combinar PDFs.                   | Público   |
@@ -88,3 +97,11 @@ Este es un proyecto Flask que proporciona una colección de herramientas web cat
 | `/port-scanner`        | `GET`     | Herramienta de escáner de puertos.                | Público   |
 | `/http-headers`        | `GET`     | Herramienta de cabeceras HTTP.                    | Público   |
 | `/password-generator`  | `GET`     | Herramienta de generación de contraseñas.         | Público   |
+| `/mx-lookup`           | `GET`     | Herramienta de búsqueda de registros MX.          | Público   |
+| `/dns-lookup`          | `GET`     | Herramienta de búsqueda de DNS.                   | Público   |
+| `/reverse-dns`         | `GET`     | Herramienta de búsqueda de DNS inversa.           | Público   |
+| `/whois-lookup`        | `GET`     | Herramienta de búsqueda WHOIS.                    | Público   |
+| `/spf-check`           | `GET`     | Herramienta de verificación de SPF.               | Público   |
+| `/dkim-check`          | `GET`     | Herramienta de verificación de DKIM.              | Público   |
+| `/dmarc-check`         | `GET`     | Herramienta de verificación de DMARC.             | Público   |
+| `/email-header`        | `GET`     | Herramienta para analizar cabeceras de correo.    | Público   |
