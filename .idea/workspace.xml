@@ -4,71 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="4cede54d-c8e9-460f-8292-a347d064646e" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app.py" beforeDir="false" afterPath="$PROJECT_DIR$/app.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app_backup_before_merge.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/css/themes.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/js/theme-manager.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/check_system_script.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/roles.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/fix.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup.zip" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/README.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/app.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/assets/css/themes.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/assets/js/theme-manager.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/check_system_script.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/config.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/config/roles.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/fix.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/forms.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/index_redirect.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/init_db.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/install.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/install2.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/models.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/network_tools_backend.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/pages/admin_dashboard.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/pages/settings.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/pages/user_dashboard.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/requirements.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/templates/admin.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/templates/base.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/templates/compress_image.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/templates/compress_pdf.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/templates/image_optimizer.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/templates/images_to_pdf.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/templates/index.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/templates/login.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/templates/md_to_pdf.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/templates/merge_pdf.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/templates/mx_lookup.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/templates/pdf_optimizer.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/flask_project_backup/templates/register.html" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/forms.py" beforeDir="false" afterPath="$PROJECT_DIR$/forms.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/index_redirect.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/init_db.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/install.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/install2.sh" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/models.py" beforeDir="false" afterPath="$PROJECT_DIR$/models.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/network_tools_backend.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/admin_dashboard.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/settings.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/pages/user_dashboard.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/requirements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/requirements.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/base.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/base.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/blacklist_check.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/blacklist_check.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/http_headers.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/http_headers.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/ip_whois.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/ip_whois.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/password_gen.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/password_gen.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/port_scanner.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/port_scanner.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/templates/ssl_check.html" beforeDir="false" afterPath="$PROJECT_DIR$/templates/ssl_check.html" afterDir="false" />
-    </list>
+    <list default="true" id="4cede54d-c8e9-460f-8292-a347d064646e" name="Changes" comment="ok" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -93,20 +29,22 @@
     </option>
   </component>
   <component name="Git.Settings">
+    <option name="PUSH_AUTO_UPDATE" value="true" />
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="UPDATE_TYPE" value="REBASE" />
   </component>
-  <component name="GitHubPullRequestSearchHistory"><![CDATA[{
-  "lastFilter": {
-    "state": "OPEN",
-    "assignee": "cazique"
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;cazique&quot;
   }
-}]]></component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/cazique/cleostudio-multiherramientas.git",
-    "accountId": "0979f2df-548c-41b8-8704-f2b20ed16ae3"
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/cazique/cleostudio-multiherramientas.git&quot;,
+    &quot;accountId&quot;: &quot;0979f2df-548c-41b8-8704-f2b20ed16ae3&quot;
   }
-}]]></component>
+}</component>
   <component name="ProblemsViewState">
     <option name="selectedTabId" value="AISelfReview" />
   </component>
@@ -118,31 +56,31 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Flask server.cleostudio-multiherramientas.executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "Python.app.executor": "Run",
-    "Python.check_system_script.executor": "Run",
-    "Python.init_db.executor": "Run",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "Servidor Flask.cleostudio-multiherramientas.executor": "Run",
-    "git-widget-placeholder": "main",
-    "junie.onboarding.icon.badge.shown": "true",
-    "last_opened_file_path": "/Users/jorgemartincasasola/PycharmProjects/cleostudio-multiherramientas",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "run.code.analysis.last.selected.profile": "aDefault",
-    "settings.editor.selected.configurable": "preferences.pluginManager",
-    "to.speed.mode.migration.done": "true",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Flask server.cleostudio-multiherramientas.executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;Python.app.executor&quot;: &quot;Run&quot;,
+    &quot;Python.check_system_script.executor&quot;: &quot;Run&quot;,
+    &quot;Python.init_db.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;Servidor Flask.cleostudio-multiherramientas.executor&quot;: &quot;Run&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/jorgemartincasasola/PycharmProjects/cleostudio-multiherramientas&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;run.code.analysis.last.selected.profile&quot;: &quot;aDefault&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$" />
@@ -184,7 +122,7 @@
       <workItem from="1759702630398" duration="5495000" />
       <workItem from="1759711480002" duration="151000" />
       <workItem from="1759711709402" duration="208000" />
-      <workItem from="1759711970478" duration="4830000" />
+      <workItem from="1759711970478" duration="5128000" />
     </task>
     <servers />
   </component>
