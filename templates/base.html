@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Multi-Herramientas{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
@@ -23,29 +22,121 @@
             }
         }
     </script>
-    <style>body{font-family:Inter,sans-serif}</style>
+    <style>body{font-family:Inter,sans-serif}.megamenu{display:none}.megamenu.active{display:block}</style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-900 transition-colors">
     <nav class="bg-white dark:bg-gray-800 shadow-sm sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center">
-                <a href="{{ url_for("index") if current_user.is_authenticated else url_for("login") }}" class="text-2xl font-bold text-accent">
-                    ❤️ Multi-Herramientas
+                <a href="{{ url_for("index") if current_user.is_authenticated else url_for("login") }}" class="text-2xl font-bold text-accent flex items-center gap-2">
+                    <span>❤️</span> Multi-Herramientas
                 </a>
                 {% if current_user.is_authenticated %}
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-6">
+                    <div class="relative group">
+                        <button class="text-gray-700 dark:text-gray-300 hover:text-primary font-medium flex items-center gap-1">
+                            Todas las herramientas
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <div class="absolute left-1/2 transform -translate-x-1/2 mt-2 w-screen max-w-6xl bg-white dark:bg-gray-800 rounded-xl shadow-2xl p-8 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                            <div class="grid grid-cols-4 gap-8">
+                                <div>
+                                    <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">📄 PDF e Imágenes</h3>
+                                    <div class="space-y-2">
+                                        <a href="/md-to-pdf" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                            <span class="text-2xl">📝</span>
+                                            <span class="text-sm text-gray-900 dark:text-white font-medium">MD → PDF</span>
+                                        </a>
+                                        <a href="/compress-pdf" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                            <span class="text-2xl">🗜️</span>
+                                            <span class="text-sm text-gray-900 dark:text-white font-medium">Comprimir PDF</span>
+                                        </a>
+                                        <a href="/merge-pdf" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                            <span class="text-2xl">📚</span>
+                                            <span class="text-sm text-gray-900 dark:text-white font-medium">Combinar PDF</span>
+                                        </a>
+                                        <a href="/split-pdf" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                            <span class="text-2xl">✂️</span>
+                                            <span class="text-sm text-gray-900 dark:text-white font-medium">Dividir PDF</span>
+                                        </a>
+                                        <a href="/images-to-pdf" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                            <span class="text-2xl">📄</span>
+                                            <span class="text-sm text-gray-900 dark:text-white font-medium">IMG → PDF</span>
+                                        </a>
+                                        <a href="/compress-image" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                            <span class="text-2xl">🎨</span>
+                                            <span class="text-sm text-gray-900 dark:text-white font-medium">Comprimir IMG</span>
+                                        </a>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">🌐 Red</h3>
+                                    <div class="space-y-2">
+                                        <a href="/ip-whois" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                            <span class="text-2xl">📜</span>
+                                            <span class="text-sm text-gray-900 dark:text-white font-medium">IP WHOIS</span>
+                                        </a>
+                                        <a href="/blacklist-check" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                            <span class="text-2xl">🛡️</span>
+                                            <span class="text-sm text-gray-900 dark:text-white font-medium">Blacklist Check</span>
+                                        </a>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">🔒 Seguridad</h3>
+                                    <div class="space-y-2">
+                                        <a href="/ssl-check" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                            <span class="text-2xl">✅</span>
+                                            <span class="text-sm text-gray-900 dark:text-white font-medium">SSL Check</span>
+                                        </a>
+                                        <a href="/port-scanner" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                            <span class="text-2xl">📡</span>
+                                            <span class="text-sm text-gray-900 dark:text-white font-medium">Port Scanner</span>
+                                        </a>
+                                        <a href="/http-headers" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                            <span class="text-2xl">📑</span>
+                                            <span class="text-sm text-gray-900 dark:text-white font-medium">HTTP Headers</span>
+                                        </a>
+                                        <a href="/password-generator" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                            <span class="text-2xl">🔑</span>
+                                            <span class="text-sm text-gray-900 dark:text-white font-medium">Passwords</span>
+                                        </a>
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">📧 DNS & Email</h3>
+                                    <div class="space-y-2">
+                                        <a href="/mx-lookup" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                            <span class="text-2xl">📮</span>
+                                            <span class="text-sm text-gray-900 dark:text-white font-medium">MX Lookup</span>
+                                        </a>
+                                        <a href="/dns-lookup" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                            <span class="text-2xl">🔍</span>
+                                            <span class="text-sm text-gray-900 dark:text-white font-medium">DNS Lookup</span>
+                                        </a>
+                                        <a href="/spf-check" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                            <span class="text-2xl">🛡️</span>
+                                            <span class="text-sm text-gray-900 dark:text-white font-medium">SPF Check</span>
+                                        </a>
+                                        <a href="/dkim-check" class="flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                                            <span class="text-2xl">🔑</span>
+                                            <span class="text-sm text-gray-900 dark:text-white font-medium">DKIM Check</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     {% if current_user.is_admin %}
-                    <a href="{{ url_for("admin") }}" class="text-gray-700 dark:text-gray-300 hover:text-primary">🛡️ Admin</a>
+                    <a href="{{ url_for("admin") }}" class="text-gray-700 dark:text-gray-300 hover:text-primary font-medium">🛡️ Admin</a>
                     {% endif %}
-                    <button onclick="toggleTheme()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700">
-                        <span class="dark:hidden">🌙</span><span class="hidden dark:inline">☀️</span>
+                    <button onclick="toggleTheme()" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                        <span class="dark:hidden text-xl">🌙</span><span class="hidden dark:inline text-xl">☀️</span>
                     </button>
                     <div class="relative group">
-                        <button class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                            <span>{{ current_user.username }}</span>
-                        </button>
-                        <div class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg hidden group-hover:block">
-                            <a href="{{ url_for("logout") }}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700">Cerrar sesión</a>
+                        <button class="text-gray-700 dark:text-gray-300 hover:text-primary font-medium">{{ current_user.username }}</button>
+                        <div class="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all">
+                            <a href="{{ url_for("logout") }}" class="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg">Cerrar sesión</a>
                         </div>
                     </div>
                 </div>
@@ -59,7 +150,7 @@
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     {% for category, message in messages %}
-                    <div class="mb-4 p-4 rounded-lg {{ "bg-red-100 text-red-800" if category == "error" else "bg-green-100 text-green-800" }}">
+                    <div class="mb-4 p-4 rounded-lg {{ "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200" if category == "error" else "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200" }}">
                         {{ message }}
                     </div>
                     {% endfor %}
