@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Blacklist Check{% endblock %}
+{% block content %}
+<div class="card-tool">
+    <div class="tool-header">
+        <h1 class="tool-title">🛡️ Blacklist Check</h1>
+        <p class="tool-description">Verifica si una IP está en listas negras de spam</p>
+    </div>
+    <div class="input-group-modern">
+        <input type="text" id="ipInput" placeholder="Ejemplo: 8.8.8.8" onkeypress="if(event.key==='Enter') check()">
+        <button onclick="check()" class="btn-gradient"><i class="bi bi-shield-check"></i> Verificar</button>
+    </div>
+    <div id="loader" class="loader-container"><div class="spinner"></div><p style="color: var(--text-secondary);">Verificando...</p></div>
+    <div id="error" class="alert-modern alert-error"></div>
+    <div id="results" class="alert-modern alert-info"></div>
+</div>
+<script>
+async function check() {
+    const ip = document.getElementById('ipInput').value.trim();
+    const loader = document.getElementById('loader');
+    const errorDiv = document.getElementById('error');
+    const resultsDiv = document.getElementById('results');
+    if (!ip) { errorDiv.innerHTML = '<strong><i class="bi bi-exclamation-triangle"></i> Error:</strong> Ingresa una IP'; errorDiv.classList.add('active'); return; }
+    loader.classList.add('active'); errorDiv.classList.remove('active'); resultsDiv.classList.remove('active');
+    try {
+        const fd = new FormData(); fd.append('ip', ip);
+        const r = await fetch('/api/blacklist-check', {method: 'POST', body: fd});
+        const d = await r.json();
+        if (d.success) {
+            const status = d.data.listed_count > 0 ? 'alert-error' : 'alert-success';
+            const icon = d.data.listed_count > 0 ? 'exclamation-triangle' : 'check-circle';
+            const text = d.data.listed_count > 0 ? 'Encontrada en <strong>' + d.data.listed_count + '</strong> de ' + d.data.total_checked + ' listas' : 'No encontrada en ninguna de ' + d.data.total_checked + ' listas';
+            let h = '<div style="padding:20px;margin-bottom:20px" class="' + status.replace('alert-','badge-') + '"><h4><i class="bi bi-' + icon + '"></i> IP: <code>' + d.data.ip + '</code></h4><p>' + text + '</p></div><table class="results-table"><thead><tr><th>Servidor</th><th>Estado</th></tr></thead><tbody>';
+            d.data.results.forEach(x => {
+                let badge = x.listed === true ? '<span class="badge-modern badge-danger">Encontrada</span>' : x.listed === false ? '<span class="badge-modern badge-success">Limpia</span>' : '<span class="badge-modern badge-secondary">Error</span>';
+                h += '<tr><td><code>' + x.server + '</code></td><td>' + badge + '</td></tr>';
+            });
+            h += '</tbody></table>';
+            resultsDiv.innerHTML = h; resultsDiv.classList.remove('alert-info'); resultsDiv.classList.add(status); resultsDiv.classList.add('active');
+        } else { errorDiv.innerHTML = '<strong><i class="bi bi-exclamation-triangle"></i> Error:</strong> ' + d.error; errorDiv.classList.add('active'); }
+    } catch (e) { errorDiv.innerHTML = '<strong><i class="bi bi-exclamation-triangle"></i> Error:</strong> Conexión fallida'; errorDiv.classList.add('active'); }
+    finally { loader.classList.remove('active'); }
+}
+</script>
+{% endblock %}

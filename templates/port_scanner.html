@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}Port Scanner{% endblock %}
+{% block content %}
+<div class="card-tool">
+    <div class="tool-header">
+        <h1 class="tool-title">📡 Port Scanner</h1>
+        <p class="tool-description">Escanea puertos comunes de un servidor</p>
+    </div>
+    <div class="input-group-modern">
+        <input type="text" id="hostnameInput" placeholder="Ejemplo: google.com" onkeypress="if(event.key==='Enter') scan()">
+        <button onclick="scan()" class="btn-gradient"><i class="bi bi-radar"></i> Escanear</button>
+    </div>
+    <div id="loader" class="loader-container"><div class="spinner"></div><p style="color: var(--text-secondary);">Escaneando...</p></div>
+    <div id="error" class="alert-modern alert-error"></div>
+    <div id="results" class="alert-modern alert-info"></div>
+</div>
+<script>
+async function scan() {
+    const host = document.getElementById('hostnameInput').value.trim();
+    const loader = document.getElementById('loader');
+    const errorDiv = document.getElementById('error');
+    const resultsDiv = document.getElementById('results');
+    if (!host) { errorDiv.innerHTML = '<strong><i class="bi bi-exclamation-triangle"></i> Error:</strong> Ingresa un host'; errorDiv.classList.add('active'); return; }
+    loader.classList.add('active'); errorDiv.classList.remove('active'); resultsDiv.classList.remove('active');
+    try {
+        const fd = new FormData(); fd.append('hostname', host);
+        const r = await fetch('/api/port-scan', {method: 'POST', body: fd});
+        const d = await r.json();
+        if (d.success) {
+            let h = '<div style="padding:15px;background:#e3f2fd;border-radius:8px;margin-bottom:20px"><h5><i class="bi bi-info-circle"></i> Resultados</h5><p><strong>Host:</strong> ' + d.data.hostname + ' (<code>' + d.data.ip + '</code>)</p><p><strong>Abiertos:</strong> ' + d.data.open_ports + ' de ' + d.data.results.length + '</p></div><table class="results-table"><thead><tr><th>Puerto</th><th>Servicio</th><th>Estado</th></tr></thead><tbody>';
+            d.data.results.forEach(x => {
+                const badge = x.status === 'Abierto' ? '<span class="badge-modern badge-success">Abierto</span>' : '<span class="badge-modern badge-secondary">Cerrado</span>';
+                h += '<tr><td><strong>' + x.port + '</strong></td><td>' + x.service + '</td><td>' + badge + '</td></tr>';
+            });
+            h += '</tbody></table>';
+            resultsDiv.innerHTML = h; resultsDiv.classList.add('active');
+        } else { errorDiv.innerHTML = '<strong><i class="bi bi-exclamation-triangle"></i> Error:</strong> ' + d.error; errorDiv.classList.add('active'); }
+    } catch (e) { errorDiv.innerHTML = '<strong><i class="bi bi-exclamation-triangle"></i> Error:</strong> Conexión fallida'; errorDiv.classList.add('active'); }
+    finally { loader.classList.remove('active'); }
+}
+</script>
+{% endblock %}

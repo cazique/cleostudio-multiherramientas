@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}HTTP Headers{% endblock %}
+{% block content %}
+<div class="card-tool">
+    <div class="tool-header">
+        <h1 class="tool-title">📑 HTTP Headers</h1>
+        <p class="tool-description">Analiza las cabeceras HTTP de una URL</p>
+    </div>
+    <div class="input-group-modern">
+        <input type="text" id="urlInput" placeholder="Ejemplo: https://google.com" onkeypress="if(event.key==='Enter') get()">
+        <button onclick="get()" class="btn-gradient"><i class="bi bi-search"></i> Analizar</button>
+    </div>
+    <div id="loader" class="loader-container"><div class="spinner"></div><p style="color: var(--text-secondary);">Analizando...</p></div>
+    <div id="error" class="alert-modern alert-error"></div>
+    <div id="results" class="alert-modern alert-info"></div>
+</div>
+<script>
+async function get() {
+    const url = document.getElementById('urlInput').value.trim();
+    const loader = document.getElementById('loader');
+    const errorDiv = document.getElementById('error');
+    const resultsDiv = document.getElementById('results');
+    if (!url) { errorDiv.innerHTML = '<strong><i class="bi bi-exclamation-triangle"></i> Error:</strong> Ingresa una URL'; errorDiv.classList.add('active'); return; }
+    loader.classList.add('active'); errorDiv.classList.remove('active'); resultsDiv.classList.remove('active');
+    try {
+        const fd = new FormData(); fd.append('url', url);
+        const r = await fetch('/api/http-headers', {method: 'POST', body: fd});
+        const d = await r.json();
+        if (d.success) {
+            const badge = d.data.status_code >= 200 && d.data.status_code < 300 ? '<span class="badge-modern badge-success">' + d.data.status_code + '</span>' : d.data.status_code >= 300 && d.data.status_code < 400 ? '<span class="badge-modern badge-info">' + d.data.status_code + '</span>' : '<span class="badge-modern badge-danger">' + d.data.status_code + '</span>';
+            let h = '<div style="padding:15px;background:#f8f9fa;border-radius:8px;margin-bottom:20px"><h5><i class="bi bi-link-45deg"></i> URL: <code>' + d.data.final_url + '</code></h5><p><strong>Código:</strong> ' + badge + '</p></div>';
+            if (d.data.redirect_history.length > 1) {
+                h += '<h5><i class="bi bi-arrow-repeat"></i> Redirecciones</h5><ol>';
+                d.data.redirect_history.forEach(x => h += '<li><code>' + x.url + '</code> → ' + x.status_code + '</li>');
+                h += '</ol>';
+            }
+            h += '<h5 style="margin:25px 0 15px"><i class="bi bi-list-ul"></i> Cabeceras</h5><table class="results-table"><thead><tr><th style="width:30%">Nombre</th><th>Valor</th></tr></thead><tbody>';
+            d.data.headers.forEach(x => h += '<tr><td><strong>' + x.name + '</strong></td><td><code style="word-break:break-all;font-size:0.9rem">' + x.value.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\\\\':'&#039;'}[m])) + '</code></td></tr>');
+            h += '</tbody></table>';
+            resultsDiv.innerHTML = h; resultsDiv.classList.add('active');
+        } else { errorDiv.innerHTML = '<strong><i class="bi bi-exclamation-triangle"></i> Error:</strong> ' + d.error; errorDiv.classList.add('active'); }
+    } catch (e) { errorDiv.innerHTML = '<strong><i class="bi bi-exclamation-triangle"></i> Error:</strong> Conexión fallida'; errorDiv.classList.add('active'); }
+    finally { loader.classList.remove('active'); }
+}
+</script>
+{% endblock %}
