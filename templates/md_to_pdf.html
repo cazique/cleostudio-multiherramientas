@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Markdown → PDF{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="text-center mb-8">
+        <div class="text-6xl mb-4">📝</div>
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Markdown → PDF</h1>
+        <p class="text-gray-600 dark:text-gray-400">Convierte tus documentos Markdown a PDF con formato profesional</p>
+    </div>
+
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+        <textarea id="markdown" rows="12" placeholder="# Tu documento Markdown aquí..." class="w-full p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white font-mono"></textarea>
+        
+        <div class="mt-6 flex gap-4">
+            <button onclick="preview()" class="flex-1 bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white py-3 px-6 rounded-lg font-semibold hover:bg-gray-300 dark:hover:bg-gray-600 transition">
+                👁️ Vista previa
+            </button>
+            <button onclick="generate()" class="flex-1 bg-primary hover:bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold transition">
+                📄 Generar PDF
+            </button>
+        </div>
+
+        <div id="preview" class="mt-6 p-6 bg-gray-50 dark:bg-gray-900 rounded-lg hidden"></div>
+        <div id="loading" class="text-center py-8 hidden">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
+        </div>
+    </div>
+</div>
+<script>
+async function preview(){const m=document.getElementById("markdown").value;const r=await fetch("/api/preview-markdown",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({markdown:m})});const d=await r.json();if(d.success){document.getElementById("preview").innerHTML=d.html;document.getElementById("preview").classList.remove("hidden")}}
+async function generate(){const m=document.getElementById("markdown").value,f=prompt("Nombre del archivo:","documento")||"documento";document.getElementById("loading").classList.remove("hidden");const r=await fetch("/api/generate-pdf",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({markdown:m,filename:f})});if(r.ok){const b=await r.blob(),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download=f+".pdf";a.click();URL.revokeObjectURL(u)}document.getElementById("loading").classList.add("hidden")}
+</script>
+{% endblock %}
