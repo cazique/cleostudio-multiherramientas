@@ -180,7 +180,7 @@ def generate_pdf():
         filename = data.get("filename", "documento")
         html_content = markdown.markdown(md_content, extensions=["tables", "fenced_code", "nl2br", "sane_lists"])
         css = """<style>@page{size:A4;margin:2cm}body{font-family:Arial,sans-serif;line-height:1.6;color:#333;font-size:12pt}h1{color:#2c3e50;border-bottom:3px solid #3498db;padding-bottom:10px;margin-top:20px;font-size:24pt}h2{color:#2c3e50;border-bottom:2px solid #95a5a6;padding-bottom:8px;margin-top:18px;font-size:20pt}code{background-color:#f4f4f4;padding:2px 6px;border-radius:3px;color:#c7254e;font-family:monospace}pre{background-color:#282c34;color:#abb2bf;padding:15px;border-radius:5px;overflow-x:auto}blockquote{border-left:4px solid #3498db;padding-left:15px;margin-left:0;color:#555;font-style:italic;background-color:#f9f9f9;padding:10px 15px}table{border-collapse:collapse;width:100%;margin:15px 0}th,td{border:1px solid #ddd;padding:10px;text-align:left}th{background-color:#3498db;color:white;font-weight:600}tr:nth-child(even){background-color:#f9f9f9}</style>"""
-        html_full = f"<!DOCTYPE html><html><head><meta charset=\047UTF-8\047>{css}</head><body>{html_content}</body></html>"
+        html_full = f"<!DOCTYPE html><html><head><meta charset='UTF-8'>{css}</head><body>{html_content}</body></html>"
         buffer = io.BytesIO()
         pisa_status = pisa.CreatePDF(html_full, dest=buffer)
         if pisa_status.err:
@@ -407,7 +407,7 @@ def ssl_check_api():
     except socket.gaierror:
         return jsonify({"success": False, "error": f"No se pudo resolver el nombre de host: {hostname}"}), 404
     except ssl.SSLCertVerificationError as e:
-        return jsonify({"success": False, "error": f"Error de verificación: {getattr(e, \047reason\047, str(e))}"}), 400
+        return jsonify({"success": False, "error": f"Error de verificación: {getattr(e, 'reason', str(e))}"}), 400
     except ssl.SSLError as e:
         return jsonify({"success": False, "error": f"Error de SSL: {str(e)}"}), 400
     except Exception as e:
@@ -642,7 +642,7 @@ def spf_check_api():
     try:
         domain = _clean_domain((request.form.get("domain") or "").strip())
         answers = _resolver().resolve(domain, "TXT")
-        spf = [b" ".join(r.strings).decode() if hasattr(r, "strings") else str(r) for r in answers 
+        spf = [b" ".join(r.strings).decode() if hasattr(r, "strings") else str(r) for r in answers
                if (hasattr(r, "strings") and b"v=spf1" in r.strings) or ("v=spf1" in str(r))]
         if not spf:
             return jsonify({"success": False, "error": "Sin registro SPF"}), 404
