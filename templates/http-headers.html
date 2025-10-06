@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}HTTP Headers{% endblock %}
+{% block extra_styles %}
+<style>
+.tool-page{background:white;min-height:calc(100vh-200px);padding:3rem 0}
+.tool-header{text-align:center;margin-bottom:2rem;max-width:800px;margin:0 auto}
+.tool-header h1{font-size:2.5rem;font-weight:700;color:#2c3e50;margin-bottom:1rem}
+.tool-description{font-size:1.1rem;color:#7f8c8d;line-height:1.6;margin-bottom:1.5rem}
+.tool-features{background:#f8f9fa;padding:1.5rem;border-radius:10px;text-align:left}
+.input-card{max-width:600px;margin:2rem auto;background:white;padding:2rem;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08)}
+.input-group-modern{display:flex;gap:0.75rem}
+.input-group-modern input{flex:1;padding:0.9rem 1.2rem;border:2px solid #e9ecef;border-radius:8px}
+.btn-main{background:#fdcb6e;color:#2c3e50;border:none;padding:0.9rem 2rem;border-radius:8px;font-weight:600;cursor:pointer}
+.results-card{max-width:900px;margin:2rem auto;background:white;padding:2rem;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08)}
+</style>
+{% endblock %}
+{% block content %}
+<div class="tool-page"><div class="container">
+<div class="tool-header">
+<h1>📑 HTTP Headers</h1>
+<p class="tool-description">Analiza las cabeceras HTTP de respuesta de cualquier URL. Útil para debugging, seguridad y optimización web.</p>
+<div class="tool-features"><h3>Características:</h3><ul>
+<li>Muestra todas las cabeceras HTTP</li><li>Detecta redirecciones</li><li>Analiza cabeceras de seguridad</li><li>Formato legible y ordenado</li>
+</ul></div>
+</div>
+<div class="input-card">
+<div class="input-group-modern">
+<input type="text" id="urlInput" placeholder="https://ejemplo.com" onkeypress="if(event.key==='Enter')check()">
+<button class="btn-main" onclick="check()">Analizar</button>
+</div>
+<div id="loader" class="text-center py-4" style="display:none"><div class="spinner-border mb-2"></div></div>
+<div id="error" class="alert alert-danger mt-3" style="display:none"></div>
+</div>
+<div id="results" style="display:none"><div class="results-card"><h5 class="mb-3">Cabeceras HTTP:</h5><div id="resultsContent"></div></div></div>
+</div></div>
+<script>
+async function check(){const url=document.getElementById('urlInput').value.trim();if(!url){document.getElementById('error').textContent='Ingresa una URL';document.getElementById('error').style.display='block';return}document.getElementById('loader').style.display='block';document.getElementById('error').style.display='none';document.getElementById('results').style.display='none';try{const fd=new FormData();fd.append('url',url);const r=await fetch('/api/http-headers',{method:'POST',body:fd});const data=await r.json();if(data.success){let h='<div class="alert alert-info mb-3"><strong>URL:</strong> '+data.data.final_url+' | <strong>Código:</strong> '+data.data.status_code+'</div><table class="table table-sm table-hover"><thead><tr><th style="width:30%">Cabecera</th><th>Valor</th></tr></thead><tbody>';data.data.headers.forEach(x=>h+='<tr><td><strong>'+x.name+'</strong></td><td><code style="word-break:break-all;font-size:0.85rem">'+x.value+'</code></td></tr>');h+='</tbody></table>';document.getElementById('resultsContent').innerHTML=h;document.getElementById('results').style.display='block'}else{document.getElementById('error').textContent=data.error;document.getElementById('error').style.display='block'}}catch(e){document.getElementById('error').textContent='Error';document.getElementById('error').style.display='block'}finally{document.getElementById('loader').style.display='none'}}
+</script>
+{% endblock %}

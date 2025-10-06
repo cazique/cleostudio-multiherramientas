@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}IP WHOIS{% endblock %}
+{% block extra_styles %}
+<style>
+.tool-page{background:white;min-height:calc(100vh-200px);padding:3rem 0}
+.tool-header{text-align:center;margin-bottom:2rem;max-width:800px;margin:0 auto}
+.tool-header h1{font-size:2.5rem;font-weight:700;color:#2c3e50;margin-bottom:1rem}
+.tool-description{font-size:1.1rem;color:#7f8c8d;line-height:1.6;margin-bottom:1.5rem}
+.tool-features{background:#f8f9fa;padding:1.5rem;border-radius:10px;text-align:left}
+.input-card{max-width:600px;margin:2rem auto;background:white;padding:2rem;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08)}
+.input-group-modern{display:flex;gap:0.75rem}
+.input-group-modern input{flex:1;padding:0.9rem 1.2rem;border:2px solid #e9ecef;border-radius:8px}
+.btn-main{background:#a29bfe;color:white;border:none;padding:0.9rem 2rem;border-radius:8px;font-weight:600;cursor:pointer}
+.results-card{max-width:800px;margin:2rem auto;background:white;padding:2rem;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08)}
+</style>
+{% endblock %}
+{% block content %}
+<div class="tool-page"><div class="container">
+<div class="tool-header">
+<h1>📜 IP WHOIS</h1>
+<p class="tool-description">Consulta información de registro WHOIS para direcciones IP. Obtén detalles sobre el propietario, organización y localización.</p>
+<div class="tool-features"><h3>Características:</h3><ul>
+<li>Información del propietario de la IP</li><li>Detalles de organización</li><li>Rangos de red asignados</li><li>Datos de contacto administrativo</li>
+</ul></div>
+</div>
+<div class="input-card">
+<div class="input-group-modern">
+<input type="text" id="ipInput" placeholder="8.8.8.8" onkeypress="if(event.key==='Enter')check()">
+<button class="btn-main" onclick="check()">Consultar WHOIS</button>
+</div>
+<div id="loader" class="text-center py-4" style="display:none"><div class="spinner-border mb-2"></div></div>
+<div id="error" class="alert alert-danger mt-3" style="display:none"></div>
+</div>
+<div id="results" style="display:none"><div class="results-card"><h5 class="mb-3">Información WHOIS:</h5><div id="resultsContent"></div></div></div>
+</div></div>
+<script>
+async function check(){const ip=document.getElementById('ipInput').value.trim();if(!ip){document.getElementById('error').textContent='Ingresa una IP';document.getElementById('error').style.display='block';return}document.getElementById('loader').style.display='block';document.getElementById('error').style.display='none';document.getElementById('results').style.display='none';try{const fd=new FormData();fd.append('ip',ip);const r=await fetch('/api/ip-whois',{method:'POST',body:fd});const data=await r.json();if(data.success){let h='<div class="alert alert-success mb-3"><strong>IP:</strong> '+ip+'</div><table class="table table-sm">';for(const[k,v]of Object.entries(data.data)){h+='<tr><td><strong>'+k.replace(/_/g,' ')+':</strong></td><td>'+v+'</td></tr>'}h+='</table>';document.getElementById('resultsContent').innerHTML=h;document.getElementById('results').style.display='block'}else{document.getElementById('error').textContent=data.error;document.getElementById('error').style.display='block'}}catch(e){document.getElementById('error').textContent='Error';document.getElementById('error').style.display='block'}finally{document.getElementById('loader').style.display='none'}}
+</script>
+{% endblock %}

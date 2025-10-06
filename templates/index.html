@@ -1,68 +1,323 @@
 {% extends "base.html" %}
-{% block title %}Inicio{% endblock %}
+{% block title %}Multi-Herramientas{% endblock %}
+
 {% block extra_styles %}
-.hero { background: white; border-radius: 20px; padding: 30px; box-shadow: 0 6px 18px rgba(0,0,0,0.08); margin-bottom: 30px; text-align: center; }
-.hero h1 { color: #2c3e50; font-size: 2rem; margin-bottom: 10px; }
-.hero p { color: #7f8c8d; font-size: 1.05rem; }
-.tabs { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:18px; }
-.tab-btn { border:1px solid #e3e6ef; padding:10px 14px; border-radius:999px; background:#fff; cursor:pointer; font-weight:600; }
-.tab-btn.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:#fff; border-color:transparent; }
-.tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; }
-.tool-card { background: white; border-radius: 12px; padding: 20px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 2px 8px rgba(0,0,0,0.06); transition: transform .15s ease, box-shadow .2s ease, border-color .2s ease; text-decoration: none; color: inherit; display: block; }
-.tool-card:hover { transform: translateY(-5px); box-shadow: 0 8px 16px rgba(102,126,234,0.3); border-color: #667eea; }
-.tool-icon { font-size: 2.5rem; margin-bottom: 10px; display: block; }
-.tool-card h3 { font-size: 0.95rem; color: #2c3e50; font-weight: 600; margin: 0; }
-.cat-title { font-size: 1rem; color:#5f6b7a; margin:.2rem 0 1rem; }
+<style>
+.hero-section { background: white; padding: 3rem 0 2rem; text-align: center; }
+.hero-title { font-size: 2rem; font-weight: 700; color: #2c3e50; margin-bottom: 0.5rem; }
+.hero-subtitle { font-size: 1rem; color: #7f8c8d; max-width: 600px; margin: 0 auto; }
+
+.tools-section { padding: 2rem 0 3rem; background: #f8f9fa; }
+.tools-container { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+
+/* ACORDEÓN DE CATEGORÍAS */
+.category-accordion { margin-bottom: 1.5rem; }
+.category-header {
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+    transition: all 0.3s;
+}
+.category-header:hover { box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+.category-header h2 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #2c3e50;
+    letter-spacing: 0.5px;
+}
+.category-toggle {
+    transition: transform 0.3s;
+    color: #7f8c8d;
+}
+.category-toggle.rotated { transform: rotate(180deg); }
+
+.category-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    padding: 0 0.5rem;
+}
+.category-content.expanded { max-height: 2000px; padding: 1rem 0.5rem; }
+
+/* GRID MÁS COMPACTO */
+.tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1rem;
+}
+
+/* TARJETAS MÁS PEQUEÑAS */
+.tool-card {
+    background: white;
+    border-radius: 10px;
+    padding: 1.25rem 1rem;
+    text-align: center;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s;
+    border: 1px solid #e9ecef;
+    min-height: 130px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+.tool-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    border-color: transparent;
+}
+
+/* ICONOS MÁS PEQUEÑOS */
+.tool-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.tool-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #2c3e50;
+    margin: 0;
+    line-height: 1.3;
+}
+
+/* TOOLTIP */
+.tool-tooltip {
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-10px);
+    background: #2c3e50;
+    color: white;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.3s;
+    z-index: 100;
+}
+.tool-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #2c3e50;
+}
+.tool-card:hover .tool-tooltip {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-5px);
+}
+
+/* COLORES */
+.tool-md-pdf .tool-icon { background: #ff6b6b; }
+.tool-compress-pdf .tool-icon { background: #4ecdc4; }
+.tool-merge-pdf .tool-icon { background: #95e1d3; }
+.tool-split-pdf .tool-icon { background: #ffeaa7; }
+.tool-images-pdf .tool-icon { background: #dfe6e9; }
+.tool-compress-img .tool-icon { background: #fd79a8; }
+.tool-ip-whois .tool-icon { background: #a29bfe; }
+.tool-blacklist .tool-icon { background: #6c5ce7; }
+.tool-ssl .tool-icon { background: #00b894; }
+.tool-port .tool-icon { background: #0984e3; }
+.tool-headers .tool-icon { background: #fdcb6e; }
+.tool-password .tool-icon { background: #e17055; }
+.tool-mx .tool-icon { background: #74b9ff; }
+.tool-dns .tool-icon { background: #fab1a0; }
+.tool-spf .tool-icon { background: #55efc4; }
+.tool-dkim .tool-icon { background: #81ecec; }
+.tool-dmarc .tool-icon { background: #a29bfe; }
+.tool-reverse .tool-icon { background: #fd79a8; }
+.tool-whois .tool-icon { background: #fdcb6e; }
+.tool-email .tool-icon { background: #74b9ff; }
+</style>
 {% endblock %}
 
 {% block content %}
-<div class="hero">
-    <h1>🛠️ Herramientas Multi-Propósito</h1>
-    <p>PDF, Imágenes, Red y Seguridad — todo en un solo lugar</p>
-</div>
-
-{% if not categories %}
-<div class="tools-grid">
-    {% for tool in tools %}
-    <a href="{{ tool.route }}" class="tool-card">
-        <span class="tool-icon">{{ tool.icon }}</span>
-        <h3>{{ tool.name }}</h3>
-    </a>
-    {% endfor %}
-</div>
-{% else %}
-<div class="tabs" id="tabs">
-    {% for key, cat in categories.items() %}
-    <button class="tab-btn {% if loop.first %}active{% endif %}" data-target="cat-{{ key }}">
-        {{ cat.icon }} {{ cat.name }}
-    </button>
-    {% endfor %}
-</div>
-
-{% for key, cat in categories.items() %}
-<section class="cat-section" id="cat-{{ key }}" style="{% if not loop.first %}display:none{% endif %}">
-    <div class="cat-title">{{ cat.tools|length }} herramientas disponibles</div>
-    <div class="tools-grid">
-        {% for tool in cat.tools %}
-        <a href="{{ tool.route }}" class="tool-card">
-            <span class="tool-icon">{{ tool.icon }}</span>
-            <h3>{{ tool.name }}</h3>
-        </a>
-        {% endfor %}
+<section class="hero-section">
+    <div class="container">
+        <h1 class="hero-title">Todas las herramientas que necesitas en un solo lugar</h1>
+        <p class="hero-subtitle">Trabaja con PDFs, analiza redes, verifica seguridad y más. 100% GRATIS.</p>
     </div>
 </section>
-{% endfor %}
+
+<section class="tools-section">
+    <div class="tools-container">
+        <!-- PDF E IMÁGENES -->
+        <div class="category-accordion">
+            <div class="category-header" onclick="toggleCategory('pdf')">
+                <h2>📄 PDF e Imágenes</h2>
+                <i class="bi bi-chevron-down category-toggle" id="toggle-pdf"></i>
+            </div>
+            <div class="category-content expanded" id="content-pdf">
+                <div class="tools-grid">
+                    <a href="/md-to-pdf" class="tool-card tool-md-pdf">
+                        <div class="tool-tooltip">Convierte archivos Markdown a PDF con formato</div>
+                        <div class="tool-icon">📝</div>
+                        <h3 class="tool-name">Markdown → PDF</h3>
+                    </a>
+                    <a href="/compress-pdf" class="tool-card tool-compress-pdf">
+                        <div class="tool-tooltip">Reduce el tamaño de archivos PDF</div>
+                        <div class="tool-icon">🗜️</div>
+                        <h3 class="tool-name">Comprimir PDF</h3>
+                    </a>
+                    <a href="/merge-pdf" class="tool-card tool-merge-pdf">
+                        <div class="tool-tooltip">Combina múltiples PDFs en uno solo</div>
+                        <div class="tool-icon">📚</div>
+                        <h3 class="tool-name">Combinar PDFs</h3>
+                    </a>
+                    <a href="/split-pdf" class="tool-card tool-split-pdf">
+                        <div class="tool-tooltip">Extrae páginas específicas de un PDF</div>
+                        <div class="tool-icon">✂️</div>
+                        <h3 class="tool-name">Dividir PDF</h3>
+                    </a>
+                    <a href="/images-to-pdf" class="tool-card tool-images-pdf">
+                        <div class="tool-tooltip">Convierte imágenes JPG/PNG a PDF</div>
+                        <div class="tool-icon">📄</div>
+                        <h3 class="tool-name">Imágenes → PDF</h3>
+                    </a>
+                    <a href="/compress-image" class="tool-card tool-compress-img">
+                        <div class="tool-tooltip">Reduce el tamaño de imágenes</div>
+                        <div class="tool-icon">🎨</div>
+                        <h3 class="tool-name">Comprimir Imagen</h3>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- RED -->
+        <div class="category-accordion">
+            <div class="category-header" onclick="toggleCategory('red')">
+                <h2>🌐 Herramientas de Red</h2>
+                <i class="bi bi-chevron-down category-toggle" id="toggle-red"></i>
+            </div>
+            <div class="category-content expanded" id="content-red">
+                <div class="tools-grid">
+                    <a href="/ip-whois" class="tool-card tool-ip-whois">
+                        <div class="tool-tooltip">Consulta información de registro de IPs</div>
+                        <div class="tool-icon">📜</div>
+                        <h3 class="tool-name">IP WHOIS</h3>
+                    </a>
+                    <a href="/blacklist-check" class="tool-card tool-blacklist">
+                        <div class="tool-tooltip">Verifica si una IP está en listas negras</div>
+                        <div class="tool-icon">🛡️</div>
+                        <h3 class="tool-name">Blacklist Check</h3>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEGURIDAD -->
+        <div class="category-accordion">
+            <div class="category-header" onclick="toggleCategory('seg')">
+                <h2>🔒 Seguridad</h2>
+                <i class="bi bi-chevron-down category-toggle" id="toggle-seg"></i>
+            </div>
+            <div class="category-content expanded" id="content-seg">
+                <div class="tools-grid">
+                    <a href="/ssl-check" class="tool-card tool-ssl">
+                        <div class="tool-tooltip">Verifica certificados SSL/TLS de dominios</div>
+                        <div class="tool-icon">✅</div>
+                        <h3 class="tool-name">SSL Check</h3>
+                    </a>
+                    <a href="/port-scanner" class="tool-card tool-port">
+                        <div class="tool-tooltip">Escanea puertos abiertos en servidores</div>
+                        <div class="tool-icon">📡</div>
+                        <h3 class="tool-name">Port Scanner</h3>
+                    </a>
+                    <a href="/http-headers" class="tool-card tool-headers">
+                        <div class="tool-tooltip">Analiza cabeceras HTTP de sitios web</div>
+                        <div class="tool-icon">📑</div>
+                        <h3 class="tool-name">HTTP Headers</h3>
+                    </a>
+                    <a href="/password-generator" class="tool-card tool-password">
+                        <div class="tool-tooltip">Genera contraseñas seguras aleatorias</div>
+                        <div class="tool-icon">🔑</div>
+                        <h3 class="tool-name">Password Generator</h3>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- DNS & EMAIL -->
+        <div class="category-accordion">
+            <div class="category-header" onclick="toggleCategory('dns')">
+                <h2>📧 DNS & Email</h2>
+                <i class="bi bi-chevron-down category-toggle" id="toggle-dns"></i>
+            </div>
+            <div class="category-content expanded" id="content-dns">
+                <div class="tools-grid">
+                    <a href="/mx-lookup" class="tool-card tool-mx">
+                        <div class="tool-tooltip">Consulta servidores de correo de un dominio</div>
+                        <div class="tool-icon">📮</div>
+                        <h3 class="tool-name">MX Lookup</h3>
+                    </a>
+                    <a href="/dns-lookup" class="tool-card tool-dns">
+                        <div class="tool-tooltip">Consulta registros DNS (A, AAAA, TXT, etc)</div>
+                        <div class="tool-icon">🔍</div>
+                        <h3 class="tool-name">DNS Lookup</h3>
+                    </a>
+                    <a href="/spf-check" class="tool-card tool-spf">
+                        <div class="tool-tooltip">Verifica registros SPF para email</div>
+                        <div class="tool-icon">🛡️</div>
+                        <h3 class="tool-name">SPF Check</h3>
+                    </a>
+                    <a href="/dkim-check" class="tool-card tool-dkim">
+                        <div class="tool-tooltip">Verifica registros DKIM para email</div>
+                        <div class="tool-icon">🔑</div>
+                        <h3 class="tool-name">DKIM Check</h3>
+                    </a>
+                    <a href="/dmarc-check" class="tool-card tool-dmarc">
+                        <div class="tool-tooltip">Verifica política DMARC de email</div>
+                        <div class="tool-icon">📣</div>
+                        <h3 class="tool-name">DMARC Check</h3>
+                    </a>
+                    <a href="/reverse-dns" class="tool-card tool-reverse">
+                        <div class="tool-tooltip">Obtiene hostname desde una IP</div>
+                        <div class="tool-icon">🔁</div>
+                        <h3 class="tool-name">Reverse DNS</h3>
+                    </a>
+                    <a href="/whois-lookup" class="tool-card tool-whois">
+                        <div class="tool-tooltip">Información de registro de dominios</div>
+                        <div class="tool-icon">📇</div>
+                        <h3 class="tool-name">WHOIS Lookup</h3>
+                    </a>
+                    <a href="/email-header" class="tool-card tool-email">
+                        <div class="tool-tooltip">Analiza headers de correos electrónicos</div>
+                        <div class="tool-icon">✉️</div>
+                        <h3 class="tool-name">Email Header</h3>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
 <script>
-const tabs = document.querySelectorAll('.tab-btn');
-tabs.forEach(btn => btn.addEventListener('click', () => {
-    tabs.forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    const target = btn.dataset.target;
-    document.querySelectorAll('.cat-section').forEach(s => {
-        s.style.display = (s.id === target) ? 'block' : 'none';
-    });
-}));
+function toggleCategory(id) {
+    const content = document.getElementById('content-' + id);
+    const toggle = document.getElementById('toggle-' + id);
+
+    content.classList.toggle('expanded');
+    toggle.classList.toggle('rotated');
+}
 </script>
-{% endif %}
 {% endblock %}

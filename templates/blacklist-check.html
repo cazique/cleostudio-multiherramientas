@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Blacklist Check{% endblock %}
+{% block extra_styles %}
+<style>
+.tool-page{background:white;min-height:calc(100vh-200px);padding:3rem 0}
+.tool-header{text-align:center;margin-bottom:2rem;max-width:800px;margin:0 auto}
+.tool-header h1{font-size:2.5rem;font-weight:700;color:#2c3e50;margin-bottom:1rem}
+.tool-description{font-size:1.1rem;color:#7f8c8d;line-height:1.6;margin-bottom:1.5rem}
+.tool-features{background:#f8f9fa;padding:1.5rem;border-radius:10px;text-align:left}
+.input-card{max-width:600px;margin:2rem auto;background:white;padding:2rem;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08)}
+.input-group-modern{display:flex;gap:0.75rem}
+.input-group-modern input{flex:1;padding:0.9rem 1.2rem;border:2px solid #e9ecef;border-radius:8px}
+.btn-main{background:#6c5ce7;color:white;border:none;padding:0.9rem 2rem;border-radius:8px;font-weight:600;cursor:pointer}
+.results-card{max-width:800px;margin:2rem auto;background:white;padding:2rem;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08)}
+</style>
+{% endblock %}
+{% block content %}
+<div class="tool-page"><div class="container">
+<div class="tool-header">
+<h1>🛡️ Blacklist Check</h1>
+<p class="tool-description">Verifica si una dirección IP está listada en las principales listas negras de spam (DNSBL). Esencial para administradores de servidores de correo.</p>
+<div class="tool-features"><h3>Características:</h3><ul>
+<li>Consulta 10 listas negras principales</li><li>Detección rápida de spam IPs</li><li>Resultados detallados por servidor</li><li>Ayuda a mantener reputación de email</li>
+</ul></div>
+</div>
+<div class="input-card">
+<div class="input-group-modern">
+<input type="text" id="ipInput" placeholder="8.8.8.8" onkeypress="if(event.key==='Enter')check()">
+<button class="btn-main" onclick="check()">Verificar</button>
+</div>
+<div id="loader" class="text-center py-4" style="display:none"><div class="spinner-border mb-2"></div><p>Consultando listas...</p></div>
+<div id="error" class="alert alert-danger mt-3" style="display:none"></div>
+</div>
+<div id="results" style="display:none"><div class="results-card"><div id="resultsContent"></div></div></div>
+</div></div>
+<script>
+async function check(){const ip=document.getElementById('ipInput').value.trim();if(!ip){document.getElementById('error').textContent='Ingresa una IP';document.getElementById('error').style.display='block';return}document.getElementById('loader').style.display='block';document.getElementById('error').style.display='none';document.getElementById('results').style.display='none';try{const fd=new FormData();fd.append('ip',ip);const r=await fetch('/api/blacklist-check',{method:'POST',body:fd});const data=await r.json();if(data.success){const status=data.data.listed_count>0?'danger':'success';const icon=data.data.listed_count>0?'exclamation-triangle':'check-circle';let h='<div class="alert alert-'+status+' mb-3"><h5><i class="bi bi-'+icon+'"></i> IP: '+data.data.ip+'</h5><p class="mb-0">'+(data.data.listed_count>0?'Encontrada en <strong>'+data.data.listed_count+'</strong> de '+data.data.total_checked+' listas':'No encontrada en ninguna de '+data.data.total_checked+' listas')+'</p></div><table class="table table-sm table-hover"><thead><tr><th>Servidor</th><th>Estado</th></tr></thead><tbody>';data.data.results.forEach(x=>{const badge=x.listed===true?'<span class="badge bg-danger">Encontrada</span>':x.listed===false?'<span class="badge bg-success">Limpia</span>':'<span class="badge bg-secondary">Error</span>';h+='<tr><td><code>'+x.server+'</code></td><td>'+badge+'</td></tr>'});h+='</tbody></table>';document.getElementById('resultsContent').innerHTML=h;document.getElementById('results').style.display='block'}else{document.getElementById('error').textContent=data.error;document.getElementById('error').style.display='block'}}catch(e){document.getElementById('error').textContent='Error';document.getElementById('error').style.display='block'}finally{document.getElementById('loader').style.display='none'}}
+</script>
+{% endblock %}

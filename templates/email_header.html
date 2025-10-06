@@ -1,83 +1,92 @@
 {% extends "base.html" %}
 {% block content %}
-    <div class="container" style="max-width:900px;margin:50px auto;">
-        <div style="background:var(--card-bg);border-radius:16px;padding:32px;box-shadow:0 4px 20px rgba(0,0,0,.08)">
-            <div style="text-align:center;margin-bottom:20px">
-                <h1 style="font-weight:800;margin:0;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent">
-                    ✉️ Email Header Analyzer</h1>
-                <p style="color:var(--text-secondary)">Herramienta de diagnóstico</p>
-            </div>
-
-            <div style="margin-bottom:10px;color:var(--text-secondary)">Pega los headers de un email completo (copiar
-                original).
-            </div>
-            <textarea id="headers" rows="12"
-                      style="width:100%;padding:12px 14px;border:2px solid var(--border);border-radius:10px;background:var(--input-bg);color:var(--text);font-family:monospace"></textarea>
-            <div style="margin-top:10px;display:flex;gap:12px;align-items:center">
-                <button onclick="analyzeHeaders()" class="btn btn-primary" style="padding:12px 22px;font-weight:600">
-                    Analizar
-                </button>
-            </div>
-
-            <div id="loader" style="display:none;text-align:center;padding:24px">
-                <div class="spinner-border" style="width:2.5rem;height:2.5rem"></div>
-                <p style="margin-top:10px;color:var(--text-secondary)">Procesando…</p>
-            </div>
-            <div id="error"
-                 style="display:none;margin-top:16px;background:#f8d7da;border:1px solid #dc3545;border-radius:10px;padding:16px">
-                <strong style="color:#721c24">Error:</strong> <span id="errorMsg"></span>
-            </div>
-            <div id="results"
-                 style="display:none;margin-top:16px;background:#d4edda;border:1px solid #28a745;border-radius:10px;padding:16px">
-                <h5 style="color:#155724;margin-bottom:12px">Resultados</h5>
-                <div id="resultsContent"></div>
-            </div>
-        </div>
+<div class="container" style="max-width: 900px; margin: 50px auto;">
+  <div class="card-tool">
+    <div class="text-center mb-4">
+      <h1 class="tool-header-gradient">Email Header Analyzer</h1>
+      <p class="text-secondary">Analiza cabeceras completas de correo electrónico.</p>
     </div>
-    <script>
 
-        async function analyzeHeaders() {
-            const headers = document.getElementById('headers').value.trim();
-            if (!headers) {
-                return showError('Pega los headers');
-            }
-            toggle('loader', true);
-            toggle('error', false);
-            toggle('results', false);
-            try {
-                const fd = new FormData();
-                fd.append('headers', headers);
-                const r = await fetch('/api/email-header', {method: 'POST', body: fd});
-                const d = await r.json();
-                if (d.success) {
-                    let h = '<ul>';
-                    h += `<li><strong>IP origen (estimada):</strong> <code>${d.origin_ip_guess || '-'}</code></li>`;
-                    h += `<li><strong>SPF:</strong> ${d.spf_result || '-'}</li>`;
-                    h += `<li><strong>DKIM presente:</strong> ${d.dkim_present ? 'sí' : 'no'}</li>`;
-                    h += '</ul>';
-                    if (d.received?.length) {
-                        h += '<h6>Received:</h6><pre>' + d.received.map(x => x.replace(/</g, '&lt;')).join('\n') + '</pre>';
-                    }
-                    if (d.auth_results?.length) {
-                        h += '<h6>Authentication-Results:</h6><pre>' + d.auth_results.map(x => x.replace(/</g, '&lt;')).join('\n') + '</pre>';
-                    }
-                    document.getElementById('resultsContent').innerHTML = h;
-                    toggle('results', true);
-                } else showError(d.error || 'Fallo');
-            } catch (e) {
-                showError('Error de conexión');
-            } finally {
-                toggle('loader', false);
-            }
-        }
+    
+<div class="lookup-section">
+  <div class="input-group">
+    <input type="text" id="input" class="form-control" placeholder="Introduce dominio o IP...">
+    <button onclick="runTool()" class="btn btn-gradient">Consultar</button>
+  </div>
+</div>
 
-        function showError(m) {
-            document.getElementById('errorMsg').textContent = m;
-            toggle('error', true);
-        }
 
-        function toggle(id, on) {
-            document.getElementById(id).style.display = on ? 'block' : 'none';
+    <div id="loader" class="text-center p-4" style="display:none;">
+      <div class="spinner-border text-primary"></div>
+      <p class="mt-2">Procesando...</p>
+    </div>
+
+    <div id="results" class="mt-4" style="display:none;"></div>
+    <div id="error" class="alert alert-danger mt-4" style="display:none;"></div>
+  </div>
+</div>
+
+<script>
+
+async function runTool() {
+    const val = document.getElementById("input").value.trim();
+    const loader = document.getElementById("loader");
+    const results = document.getElementById("results");
+    const errorDiv = document.getElementById("error");
+
+    if (!val) { showError("Por favor, introduce un valor válido."); return; }
+
+    loader.style.display = 'block';
+    results.style.display = 'none';
+    errorDiv.style.display = 'none';
+
+    try {
+        const formData = new FormData();
+        formData.append('value', val);
+
+        const res = await fetch('/api/email_header', { method: 'POST', body: formData });
+        const data = await res.json();
+
+        if (data.success) {
+            results.innerHTML = '<pre class="bg-light p-3 rounded">'+JSON.stringify(data.data, null, 2)+'</pre>';
+            results.style.display = 'block';
+        } else {
+            showError(data.error || "Error desconocido.");
         }
-    </script>
+    } catch (err) {
+        showError("Error de red o servidor.");
+    } finally {
+        loader.style.display = 'none';
+    }
+}
+
+function showError(msg) {
+    const e = document.getElementById("error");
+    e.textContent = msg;
+    e.style.display = 'block';
+}
+
+</script>
+
+<style>
+.card-tool {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 40px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+.tool-header-gradient {
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.btn-gradient {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border: none;
+  color: white;
+}
+.btn-gradient:hover { opacity: 0.9; }
+.table { color: var(--text-primary); }
+</style>
 {% endblock %}

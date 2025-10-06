@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}Port Scanner{% endblock %}
+
+{% block extra_styles %}
+<style>
+.tool-page { background: white; min-height: calc(100vh - 200px); padding: 3rem 0; }
+.tool-header { text-align: center; margin-bottom: 2rem; max-width: 800px; margin-left: auto; margin-right: auto; }
+.tool-header h1 { font-size: 2.5rem; font-weight: 700; color: #2c3e50; margin-bottom: 1rem; }
+.tool-description { font-size: 1.1rem; color: #7f8c8d; line-height: 1.6; margin-bottom: 1.5rem; }
+.tool-features { background: #f8f9fa; padding: 1.5rem; border-radius: 10px; text-align: left; }
+.tool-features h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.75rem; }
+.tool-features ul { margin: 0; padding-left: 1.5rem; }
+.tool-features li { margin-bottom: 0.5rem; color: #555; }
+
+.input-card { max-width: 600px; margin: 2rem auto; background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+.input-group-modern { display: flex; gap: 0.75rem; margin-bottom: 1.5rem; }
+.input-group-modern input { flex: 1; padding: 0.9rem 1.2rem; border: 2px solid #e9ecef; border-radius: 8px; font-size: 1rem; }
+.input-group-modern input:focus { outline: none; border-color: #0984e3; }
+
+.btn-scan { background: #0984e3; color: white; border: none; padding: 0.9rem 2rem; border-radius: 8px; font-weight: 600; font-size: 1rem; cursor: pointer; transition: all 0.3s; }
+.btn-scan:hover { background: #0770c5; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(9,132,227,0.3); }
+.btn-scan:disabled { background: #ccc; cursor: not-allowed; }
+
+.results-card { max-width: 800px; margin: 2rem auto; background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+.results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid #e9ecef; }
+.results-table { width: 100%; }
+.results-table th { background: #f8f9fa; padding: 0.75rem; text-align: left; font-weight: 600; }
+.results-table td { padding: 0.75rem; border-bottom: 1px solid #e9ecef; }
+.port-open { color: #00b894; font-weight: 600; }
+.port-closed { color: #95a5a6; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tool-page">
+    <div class="container">
+        <div class="tool-header">
+            <h1>📡 Port Scanner</h1>
+            <p class="tool-description">
+                Escanea los puertos más comunes de un servidor para identificar servicios activos. 
+                Útil para administradores de sistemas y profesionales de seguridad.
+            </p>
+            <div class="tool-features">
+                <h3>Características:</h3>
+                <ul>
+                    <li>Escanea 22 puertos comunes (HTTP, HTTPS, SSH, FTP, etc)</li>
+                    <li>Identifica servicios por puerto</li>
+                    <li>Resultados en tiempo real</li>
+                    <li>Compatible con dominios e IPs</li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="input-card">
+            <div class="input-group-modern">
+                <input type="text" id="hostInput" placeholder="ejemplo.com o 8.8.8.8" onkeypress="if(event.key==='Enter')scan()">
+                <button class="btn-scan" onclick="scan()">Escanear</button>
+            </div>
+
+            <div id="loader" class="text-center py-4" style="display:none">
+                <div class="spinner-border text-primary mb-2" style="width:2.5rem;height:2.5rem"></div>
+                <p class="text-muted">Escaneando puertos...</p>
+            </div>
+
+            <div id="error" class="alert alert-danger" style="display:none"></div>
+        </div>
+
+        <div id="results" style="display:none">
+            <div class="results-card">
+                <div class="results-header">
+                    <div>
+                        <h5 class="mb-1">Resultados del escaneo</h5>
+                        <p class="text-muted mb-0" id="resultsSummary"></p>
+                    </div>
+                </div>
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Puerto</th>
+                            <th>Servicio</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+async function scan() {
+    const host = document.getElementById('hostInput').value.trim();
+    const loader = document.getElementById('loader');
+    const error = document.getElementById('error');
+    const results = document.getElementById('results');
+
+    if (!host) {
+        error.textContent = 'Por favor ingresa un host o IP';
+        error.style.display = 'block';
+        return;
+    }
+
+    loader.style.display = 'block';
+    error.style.display = 'none';
+    results.style.display = 'none';
+
+    try {
+        const fd = new FormData();
+        fd.append('hostname', host);
+        const r = await fetch('/api/port-scan', { method: 'POST', body: fd });
+        const data = await r.json();
+
+        if (data.success) {
+            document.getElementById('resultsSummary').innerHTML = 
+                `<strong>${data.data.hostname}</strong> (${data.data.ip}) - 
+                <span class="port-open">${data.data.open_ports} puertos abiertos</span>`;
+
+            const tbody = document.getElementById('resultsBody');
+            tbody.innerHTML = '';
+            data.data.results.forEach(p => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${p.port}</strong></td>
+                    <td>${p.service}</td>
+                    <td class="${p.status === 'Abierto' ? 'port-open' : 'port-closed'}">
+                        ${p.status === 'Abierto' ? '✓ Abierto' : '✗ Cerrado'}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            results.style.display = 'block';
+        } else {
+            error.textContent = data.error || 'Error al escanear';
+            error.style.display = 'block';
+        }
+    } catch (e) {
+        error.textContent = 'Error de conexión';
+        error.style.display = 'block';
+    } finally {
+        loader.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}
