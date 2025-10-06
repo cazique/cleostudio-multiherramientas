@@ -1,59 +1,63 @@
-{% extends "base.html" %}
-{% block title %}DNS Lookup{% endblock %}
-{% block extra_styles %}
+{%extends "base.html" %}
+{%block title %}DNS Lookup{%endblock %}
+{%block extra_styles %}
 <style>
-.tool-page{{background:white;min-height:calc(100vh - 200px);padding:3rem 0}}
-.tool-header{{text-align:center;margin-bottom:2rem;max-width:800px;margin-left:auto;margin-right:auto}}
-.tool-header h1{{font-size:2.5rem;font-weight:700;color:#2c3e50;margin-bottom:1rem}}
-.tool-description{{font-size:1.1rem;color:#7f8c8d;line-height:1.6;margin-bottom:1.5rem}}
-.tool-features{{background:#f8f9fa;padding:1.5rem;border-radius:10px;text-align:left}}
-.tool-features h3{{font-size:1rem;font-weight:600;margin-bottom:0.75rem}}
-.tool-features ul{{margin:0;padding-left:1.5rem}}
-.input-card{{max-width:600px;margin:2rem auto;background:white;padding:2rem;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08)}}
-.input-group-modern{{display:flex;gap:0.75rem;margin-bottom:1.5rem}}
-.input-group-modern input,.input-group-modern select{{flex:1;padding:0.9rem 1.2rem;border:2px solid #e9ecef;border-radius:8px;font-size:1rem}}
-.input-group-modern input:focus{{outline:none;border-color:#fab1a0}}
-.btn-main{{background:#fab1a0;color:white;border:none;padding:0.9rem 2rem;border-radius:8px;font-weight:600;font-size:1rem;cursor:pointer;transition:all 0.3s}}
-.btn-main:hover{{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.2)}}
-.results-card{{max-width:800px;margin:2rem auto;background:white;padding:2rem;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08)}}
+.tool-page {background:white;min-height:calc(100vh - 200px);padding:3rem 0}
+.tool-header {text-align:center;margin-bottom:2rem;max-width:800px;margin:0 auto;padding:0 1rem}
+.tool-header h1 {font-size:2.5rem;font-weight:700;color:#2c3e50;margin-bottom:1rem}
+.tool-icon {font-size:3rem;margin-bottom:1rem}
+.tool-description {font-size:1.1rem;color:#7f8c8d;line-height:1.6;margin-bottom:1.5rem}
+.tool-features {background:#f8f9fa;padding:1.5rem;border-radius:10px;text-align:left;max-width:600px;margin:0 auto}
+.tool-features h3 {font-size:1rem;font-weight:600;color:#2c3e50;margin-bottom:0.75rem}
+.input-card {max-width:700px;margin:2rem auto;background:white;padding:2rem;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08)}
+.input-group-modern {display:flex;gap:0.75rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.input-group-modern input,.input-group-modern select,.input-group-modern textarea {flex:1;min-width:200px;padding:0.9rem 1.2rem;border:2px solid #e9ecef;border-radius:8px;font-size:1rem}
+.input-group-modern input:focus,.input-group-modern select:focus,.input-group-modern textarea:focus {outline:none;border-color:#fab1a0;box-shadow:0 0 0 3px #fab1a020}
+.btn-main {background:#fab1a0;color:white;border:none;padding:0.9rem 2rem;border-radius:8px;font-weight:600;font-size:1rem;cursor:pointer;transition:all 0.3s;white-space:nowrap}
+.btn-main:hover {transform:translateY(-2px);box-shadow:0 6px 16px #fab1a050}
+.btn-main:disabled {background:#ccc;cursor:not-allowed;transform:none}
+.results-card {max-width:900px;margin:2rem auto;background:white;padding:2rem;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.08)}
+.alert {padding:1rem 1.5rem;border-radius:8px;margin-bottom:1rem}
+.alert-danger {background:#fee;color:#c00;border:1px solid #fcc}
+.alert-success {background:#efe;color:#060;border:1px solid #cfc}
+.spinner-border {width:2rem;height:2rem;border:3px solid #fab1a030;border-top-color:#fab1a0;border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin {to {transform:rotate(360deg)}}
 </style>
-{% endblock %}
-{% block content %}
+{%endblock %}
+{%block content %}
 <div class="tool-page"><div class="container">
 <div class="tool-header">
-<h1>🔍 DNS Lookup</h1>
+<div class="tool-icon">🔍</div>
+<h1>DNS Lookup</h1>
 <p class="tool-description">Consulta registros DNS de cualquier tipo (A, AAAA, CNAME, TXT, NS, MX) para un dominio específico.</p>
-<div class="tool-features"><h3>Características:</h3><ul><li>Soporta 6 tipos de registros</li><li>Consultas rápidas</li><li>Resultados detallados</li><li>Interfaz intuitiva</li></ul></div>
+<div class="tool-features">
+<h3>✨ Características:</h3>
+<ul><li>Soporta 6 tipos de registros</li><li>Consultas rápidas</li><li>Resultados detallados</li><li>Interfaz intuitiva</li></ul>
 </div>
-
+</div>
 <div class="input-card">
-<div class="mb-3">
-<div class="btn-group" role="group">
-<button class="btn btn-primary type-btn active" data-type="A">A</button>
-<button class="btn btn-outline-secondary type-btn" data-type="AAAA">AAAA</button>
-<button class="btn btn-outline-secondary type-btn" data-type="CNAME">CNAME</button>
-<button class="btn btn-outline-secondary type-btn" data-type="TXT">TXT</button>
-<button class="btn btn-outline-secondary type-btn" data-type="NS">NS</button>
-<button class="btn btn-outline-secondary type-btn" data-type="MX">MX</button>
-</div>
-</div>
+<div class="mb-3"><div class="btn-group" role="group" style="display:flex;gap:0.5rem;flex-wrap:wrap">
+<button class="btn btn-primary active" data-type="A" onclick="selectType('A',this)" style="flex:1;min-width:60px">A</button>
+<button class="btn btn-outline-secondary" data-type="AAAA" onclick="selectType('AAAA',this)" style="flex:1;min-width:60px">AAAA</button>
+<button class="btn btn-outline-secondary" data-type="CNAME" onclick="selectType('CNAME',this)" style="flex:1;min-width:80px">CNAME</button>
+<button class="btn btn-outline-secondary" data-type="TXT" onclick="selectType('TXT',this)" style="flex:1;min-width:60px">TXT</button>
+<button class="btn btn-outline-secondary" data-type="NS" onclick="selectType('NS',this)" style="flex:1;min-width:60px">NS</button>
+<button class="btn btn-outline-secondary" data-type="MX" onclick="selectType('MX',this)" style="flex:1;min-width:60px">MX</button>
+</div></div>
 <div class="input-group-modern">
 <input type="text" id="domainInput" placeholder="ejemplo.com" onkeypress="if(event.key==='Enter')check()">
 <button class="btn-main" onclick="check()">Consultar</button>
 </div>
-<div id="loader" class="text-center py-4" style="display:none"><div class="spinner-border text-primary mb-2"></div></div>
+<div id="loader" class="text-center py-4" style="display:none"><div class="spinner-border mb-2"></div></div>
 <div id="error" class="alert alert-danger" style="display:none"></div>
 </div>
-<div id="results" style="display:none"><div class="results-card"><h5 class="mb-3">Registros DNS:</h5><div id="resultsContent"></div></div></div>
-
+<div id="results" style="display:none"><div class="results-card"><h5>📋 Registros DNS</h5><div id="resultsContent"></div></div></div>
 </div></div>
-
-{% block scripts %}
+{%endblock %}
+{%block scripts %}
 <script>
 let type='A';
-document.querySelectorAll('.type-btn').forEach(b=>b.onclick=function(){document.querySelectorAll('.type-btn').forEach(x=>x.className='btn btn-outline-secondary type-btn');this.className='btn btn-primary type-btn active';type=this.dataset.type});
-async function check(){const d=document.getElementById('domainInput').value.trim();if(!d){document.getElementById('error').textContent='Ingresa dominio';document.getElementById('error').style.display='block';return}document.getElementById('loader').style.display='block';document.getElementById('error').style.display='none';document.getElementById('results').style.display='none';try{const fd=new FormData();fd.append('domain',d);fd.append('type',type);const r=await fetch('/api/dns-lookup',{method:'POST',body:fd});const data=await r.json();if(data.success){let h='<div class="alert alert-success mb-3"><strong>Tipo:</strong> '+data.type+' | <strong>Total:</strong> '+data.total+'</div><div class="list-group">';data.records.forEach(x=>h+='<div class="list-group-item"><code>'+x.value+'</code></div>');h+='</div>';document.getElementById('resultsContent').innerHTML=h;document.getElementById('results').style.display='block'}else{document.getElementById('error').textContent=data.error;document.getElementById('error').style.display='block'}}catch(e){document.getElementById('error').textContent='Error';document.getElementById('error').style.display='block'}finally{document.getElementById('loader').style.display='none'}}
+function selectType(t,btn){type=t;document.querySelectorAll('.btn-group button').forEach(b=>{b.className='btn btn-outline-secondary'});btn.className='btn btn-primary active'}
+async function check(){const d=document.getElementById('domainInput').value.trim();if(!d){document.getElementById('error').textContent='Ingresa dominio';document.getElementById('error').style.display='block';return}document.getElementById('loader').style.display='block';document.getElementById('error').style.display='none';document.getElementById('results').style.display='none';try{const fd=new FormData();fd.append('domain',d);fd.append('type',type);const r=await fetch('/api/dns-lookup',{method:'POST',body:fd});const data=await r.json();if(data.success){let h='<div class="alert alert-success"><strong>✓ Tipo:</strong> '+data.type+' | <strong>Total:</strong> '+data.total+'</div><div class="list-group">';data.records.forEach(x=>h+='<div class="list-group-item"><code>'+x.value+'</code></div>');h+='</div>';document.getElementById('resultsContent').innerHTML=h;document.getElementById('results').style.display='block'}else{document.getElementById('error').textContent=data.error;document.getElementById('error').style.display='block'}}catch(e){document.getElementById('error').textContent='Error';document.getElementById('error').style.display='block'}finally{document.getElementById('loader').style.display='none'}}
 </script>
-{% endblock %}
-
-{% endblock %}
+{%endblock %}
