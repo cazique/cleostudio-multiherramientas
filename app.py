@@ -17,8 +17,6 @@ import requests
 import whois
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from xhtml2pdf import pisa
-
-# DNS/Email tools
 import dns.resolver
 import dns.reversename
 
@@ -48,60 +46,6 @@ login_manager.login_message = "Inicia sesión"
 def load_user(user_id):
     return User.query.get(int(user_id))
 
-# ========================= CATEGORÍAS COMPLETAS =========================
-TOOL_CATEGORIES = {
-    "pdf": {
-        "name": "PDF e Imágenes",
-        "icon": "🧩",
-        "tools": [
-            {"id": "md-to-pdf", "name": "Markdown → PDF", "icon": "📝", "route": "/md-to-pdf"},
-            {"id": "compress-pdf", "name": "Comprimir PDF", "icon": "🗜️", "route": "/compress-pdf"},
-            {"id": "merge-pdf", "name": "Combinar PDFs", "icon": "📚", "route": "/merge-pdf"},
-            {"id": "split-pdf", "name": "Dividir PDF", "icon": "✂️", "route": "/split-pdf"},
-            {"id": "images-to-pdf", "name": "Imágenes → PDF", "icon": "📄", "route": "/images-to-pdf"},
-            {"id": "compress-image", "name": "Comprimir Imagen", "icon": "🎨", "route": "/compress-image"},
-        ],
-    },
-    "network": {
-        "name": "Red",
-        "icon": "🌐",
-        "tools": [
-            {"id": "ip-whois", "name": "IP WHOIS", "icon": "📜", "route": "/ip-whois"},
-            {"id": "blacklist-check", "name": "Blacklist Check", "icon": "🛡️", "route": "/blacklist-check"},
-        ],
-    },
-    "security": {
-        "name": "Seguridad",
-        "icon": "🧰",
-        "tools": [
-            {"id": "ssl-check", "name": "SSL Check", "icon": "✅", "route": "/ssl-check"},
-            {"id": "port-scanner", "name": "Port Scanner", "icon": "📡", "route": "/port-scanner"},
-            {"id": "http-headers", "name": "HTTP Headers", "icon": "📑", "route": "/http-headers"},
-            {"id": "password-generator", "name": "Password Generator", "icon": "🔑", "route": "/password-generator"},
-        ],
-    },
-    "dns_tools": {
-        "name": "DNS Tools",
-        "icon": "🌍",
-        "tools": [
-            {"id": "mx-lookup", "name": "MX Lookup", "icon": "📮", "route": "/mx-lookup"},
-            {"id": "dns-lookup", "name": "DNS Lookup", "icon": "🔍", "route": "/dns-lookup"},
-            {"id": "reverse-dns", "name": "Reverse DNS", "icon": "🔁", "route": "/reverse-dns"},
-            {"id": "whois-lookup", "name": "WHOIS Lookup", "icon": "📇", "route": "/whois-lookup"},
-        ],
-    },
-    "email_tools": {
-        "name": "Email Tools",
-        "icon": "📧",
-        "tools": [
-            {"id": "spf-check", "name": "SPF Check", "icon": "🛡️", "route": "/spf-check"},
-            {"id": "dkim-check", "name": "DKIM Check", "icon": "🔑", "route": "/dkim-check"},
-            {"id": "dmarc-check", "name": "DMARC Check", "icon": "📣", "route": "/dmarc-check"},
-            {"id": "email-header", "name": "Email Header", "icon": "✉️", "route": "/email-header"},
-        ],
-    },
-}
-
 def init_db():
     with app.app_context():
         db.create_all()
@@ -115,7 +59,7 @@ def init_db():
 if not os.path.exists("multitools.db"):
     init_db()
 
-# ========================= AUTENTICACIÓN =========================
+# AUTENTICACIÓN
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
@@ -151,11 +95,11 @@ def logout():
     return redirect(url_for("login"))
 
 @app.route("/")
+@login_required
 def index():
-    theme = getattr(current_user, "theme", "light") if current_user.is_authenticated else "light"
-    return render_template("index.html", categories=TOOL_CATEGORIES, theme=theme)
+    return render_template("index.html")
 
-# ========================= ADMIN =========================
+# ADMIN
 @app.route("/admin")
 @login_required
 def admin():
@@ -187,36 +131,36 @@ def toggle_admin(user_id):
     db.session.commit()
     return jsonify({"success": True})
 
-# ========================= PDF/IMAGEN TOOLS =========================
+# PDF/IMAGEN TOOLS
 @app.route("/md-to-pdf")
+@login_required
 def md_to_pdf_page():
-    theme = getattr(current_user, "theme", "light") if current_user.is_authenticated else "light"
-    return render_template("md_to_pdf.html", theme=theme)
+    return render_template("md_to_pdf.html")
 
 @app.route("/compress-pdf")
+@login_required
 def compress_pdf_page():
-    theme = getattr(current_user, "theme", "light") if current_user.is_authenticated else "light"
-    return render_template("compress_pdf.html", theme=theme)
+    return render_template("compress_pdf.html")
 
 @app.route("/merge-pdf")
+@login_required
 def merge_pdf_page():
-    theme = getattr(current_user, "theme", "light") if current_user.is_authenticated else "light"
-    return render_template("merge_pdf.html", theme=theme)
+    return render_template("merge_pdf.html")
 
 @app.route("/split-pdf")
+@login_required
 def split_pdf_page():
-    theme = getattr(current_user, "theme", "light") if current_user.is_authenticated else "light"
-    return render_template("split_pdf.html", theme=theme)
+    return render_template("split_pdf.html")
 
 @app.route("/images-to-pdf")
+@login_required
 def images_to_pdf_page():
-    theme = getattr(current_user, "theme", "light") if current_user.is_authenticated else "light"
-    return render_template("images_to_pdf.html", theme=theme)
+    return render_template("images_to_pdf.html")
 
 @app.route("/compress-image")
+@login_required
 def compress_image_page():
-    theme = getattr(current_user, "theme", "light") if current_user.is_authenticated else "light"
-    return render_template("compress_image.html", theme=theme)
+    return render_template("compress_image.html")
 
 @app.route("/api/preview-markdown", methods=["POST"])
 def preview_markdown():
@@ -236,7 +180,7 @@ def generate_pdf():
         filename = data.get("filename", "documento")
         html_content = markdown.markdown(md_content, extensions=["tables", "fenced_code", "nl2br", "sane_lists"])
         css = """<style>@page{size:A4;margin:2cm}body{font-family:Arial,sans-serif;line-height:1.6;color:#333;font-size:12pt}h1{color:#2c3e50;border-bottom:3px solid #3498db;padding-bottom:10px;margin-top:20px;font-size:24pt}h2{color:#2c3e50;border-bottom:2px solid #95a5a6;padding-bottom:8px;margin-top:18px;font-size:20pt}code{background-color:#f4f4f4;padding:2px 6px;border-radius:3px;color:#c7254e;font-family:monospace}pre{background-color:#282c34;color:#abb2bf;padding:15px;border-radius:5px;overflow-x:auto}blockquote{border-left:4px solid #3498db;padding-left:15px;margin-left:0;color:#555;font-style:italic;background-color:#f9f9f9;padding:10px 15px}table{border-collapse:collapse;width:100%;margin:15px 0}th,td{border:1px solid #ddd;padding:10px;text-align:left}th{background-color:#3498db;color:white;font-weight:600}tr:nth-child(even){background-color:#f9f9f9}</style>"""
-        html_full = f"<!DOCTYPE html><html><head><meta charset='UTF-8'>{css}</head><body>{html_content}</body></html>"
+        html_full = f"<!DOCTYPE html><html><head><meta charset=\047UTF-8\047>{css}</head><body>{html_content}</body></html>"
         buffer = io.BytesIO()
         pisa_status = pisa.CreatePDF(html_full, dest=buffer)
         if pisa_status.err:
@@ -364,11 +308,11 @@ def images_to_pdf_api():
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
-# ========================= IP TOOLS =========================
+# IP TOOLS
 @app.route("/ip-whois")
+@login_required
 def ip_whois_page():
-    theme = getattr(current_user, "theme", "light") if current_user.is_authenticated else "light"
-    return render_template("ip_whois.html", theme=theme)
+    return render_template("ip_whois.html")
 
 @app.route("/api/ip-whois", methods=["POST"])
 def ip_whois_api():
@@ -394,9 +338,9 @@ DNSBL_SERVERS = ["bl.spamcop.net", "cbl.abuseat.org", "zen.spamhaus.org", "b.bar
                  "dnsbl.spfbl.net", "ubl.unsubscore.com"]
 
 @app.route("/blacklist-check")
+@login_required
 def blacklist_check_page():
-    theme = getattr(current_user, "theme", "light") if current_user.is_authenticated else "light"
-    return render_template("blacklist_check.html", theme=theme)
+    return render_template("blacklist_check.html")
 
 @app.route("/api/blacklist-check", methods=["POST"])
 def blacklist_check_api():
@@ -427,11 +371,11 @@ def blacklist_check_api():
     return jsonify({"success": True, "data": {"ip": ip_str, "total_checked": len(DNSBL_SERVERS),
                                               "listed_count": listed_count, "results": results}})
 
-# ========================= SECURITY TOOLS =========================
+# SECURITY TOOLS
 @app.route("/ssl-check")
+@login_required
 def ssl_check_page():
-    theme = getattr(current_user, "theme", "light") if current_user.is_authenticated else "light"
-    return render_template("ssl_check.html", theme=theme)
+    return render_template("ssl_check.html")
 
 @app.route("/api/ssl-check", methods=["POST"])
 def ssl_check_api():
@@ -463,7 +407,7 @@ def ssl_check_api():
     except socket.gaierror:
         return jsonify({"success": False, "error": f"No se pudo resolver el nombre de host: {hostname}"}), 404
     except ssl.SSLCertVerificationError as e:
-        return jsonify({"success": False, "error": f"Error de verificación: {getattr(e, 'reason', str(e))}"}), 400
+        return jsonify({"success": False, "error": f"Error de verificación: {getattr(e, \047reason\047, str(e))}"}), 400
     except ssl.SSLError as e:
         return jsonify({"success": False, "error": f"Error de SSL: {str(e)}"}), 400
     except Exception as e:
@@ -475,9 +419,9 @@ COMMON_PORTS = {21: "FTP", 22: "SSH", 23: "Telnet", 25: "SMTP", 53: "DNS", 80: "
                 3306: "MySQL", 5432: "PostgreSQL", 8080: "HTTP Alt."}
 
 @app.route("/port-scanner")
+@login_required
 def port_scanner_page():
-    theme = getattr(current_user, "theme", "light") if current_user.is_authenticated else "light"
-    return render_template("port_scanner.html", theme=theme)
+    return render_template("port_scanner.html")
 
 @app.route("/api/port-scan", methods=["POST"])
 def port_scan_api():
@@ -502,9 +446,9 @@ def port_scan_api():
     return jsonify({"success": True, "data": {"hostname": hostname, "ip": ip, "open_ports": open_ports, "results": results}})
 
 @app.route("/http-headers")
+@login_required
 def http_headers_page():
-    theme = getattr(current_user, "theme", "light") if current_user.is_authenticated else "light"
-    return render_template("http_headers.html", theme=theme)
+    return render_template("http_headers.html")
 
 @app.route("/api/http-headers", methods=["POST"])
 def http_headers_api():
@@ -536,7 +480,8 @@ def http_headers_api():
     except requests.exceptions.RequestException as e:
         return jsonify({"success": False, "error": f"Error: {str(e)}"}), 400
 
-@app.route("/password-generator", methods=["GET"])
+@app.route("/password-generator")
+@login_required
 def password_gen_page():
     try:
         length_raw = request.args.get("length", "16")
@@ -567,12 +512,11 @@ def password_gen_page():
         alphabet += string.ascii_lowercase
     if not error:
         password = "".join(secrets.choice(alphabet) for i in range(length))
-    theme = getattr(current_user, "theme", "light") if current_user.is_authenticated else "light"
-    return render_template("password_gen.html", theme=theme, password=password, error=error,
+    return render_template("password_generator.html", password=password, error=error,
                          p_length=length, p_upper=use_upper, p_lower=use_lower,
                          p_numbers=use_numbers, p_symbols=use_symbols)
 
-# ========================= DNS/EMAIL TOOLS =========================
+# DNS/EMAIL TOOLS
 def _clean_domain(d):
     d = re.sub(r"^https?://(www\.)?", "", d).split("/")[0].rstrip(".")
     if not re.match(r"^[A-Za-z0-9.-]+\.[A-Za-z]{2,}$", d):
@@ -586,9 +530,9 @@ def _resolver():
     return r
 
 @app.route("/mx-lookup")
+@login_required
 def mx_lookup_page():
-    theme = getattr(current_user, "theme", "light") if current_user.is_authenticated else "light"
-    return render_template("mx_lookup.html", theme=theme)
+    return render_template("mx_lookup.html")
 
 @app.route("/api/mx-lookup", methods=["POST"])
 def mx_lookup_api():
@@ -612,9 +556,9 @@ def mx_lookup_api():
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route("/dns-lookup")
+@login_required
 def dns_lookup_page():
-    theme = getattr(current_user, "theme", "light") if current_user.is_authenticated else "light"
-    return render_template("dns_lookup.html", theme=theme)
+    return render_template("dns_lookup.html")
 
 @app.route("/api/dns-lookup", methods=["POST"])
 def dns_lookup_api():
@@ -652,9 +596,9 @@ def dns_lookup_api():
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route("/reverse-dns")
+@login_required
 def reverse_dns_page():
-    theme = getattr(current_user, "theme", "light") if current_user.is_authenticated else "light"
-    return render_template("reverse_dns.html", theme=theme)
+    return render_template("reverse_dns.html")
 
 @app.route("/api/reverse-dns", methods=["POST"])
 def reverse_dns_api():
@@ -674,9 +618,9 @@ def reverse_dns_api():
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route("/whois-lookup")
+@login_required
 def whois_lookup_page():
-    theme = getattr(current_user, "theme", "light") if current_user.is_authenticated else "light"
-    return render_template("whois_lookup.html", theme=theme)
+    return render_template("whois_lookup.html")
 
 @app.route("/api/whois-lookup", methods=["POST"])
 def whois_lookup_api():
@@ -689,9 +633,9 @@ def whois_lookup_api():
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route("/spf-check")
+@login_required
 def spf_check_page():
-    theme = getattr(current_user, "theme", "light") if current_user.is_authenticated else "light"
-    return render_template("spf_check.html", theme=theme)
+    return render_template("spf_check.html")
 
 @app.route("/api/spf-check", methods=["POST"])
 def spf_check_api():
@@ -711,9 +655,9 @@ def spf_check_api():
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route("/dkim-check")
+@login_required
 def dkim_check_page():
-    theme = getattr(current_user, "theme", "light") if current_user.is_authenticated else "light"
-    return render_template("dkim_check.html", theme=theme)
+    return render_template("dkim_check.html")
 
 @app.route("/api/dkim-check", methods=["POST"])
 def dkim_check_api():
@@ -732,9 +676,9 @@ def dkim_check_api():
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route("/dmarc-check")
+@login_required
 def dmarc_check_page():
-    theme = getattr(current_user, "theme", "light") if current_user.is_authenticated else "light"
-    return render_template("dmarc_check.html", theme=theme)
+    return render_template("dmarc_check.html")
 
 @app.route("/api/dmarc-check", methods=["POST"])
 def dmarc_check_api():
@@ -754,9 +698,9 @@ def dmarc_check_api():
         return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route("/email-header")
+@login_required
 def email_header_page():
-    theme = getattr(current_user, "theme", "light") if current_user.is_authenticated else "light"
-    return render_template("email_header.html", theme=theme)
+    return render_template("email_header.html")
 
 @app.route("/api/email-header", methods=["POST"])
 def email_header_api():

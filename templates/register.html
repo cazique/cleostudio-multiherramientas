@@ -1,63 +1,48 @@
 {% extends "base.html" %}
-
 {% block title %}Registro{% endblock %}
-
 {% block content %}
-    <div class="row justify-content-center mt-5">
-        <div class="col-md-5">
-            <div class="card card-custom">
-                <div class="card-body p-5">
-                    <div class="text-center mb-4">
-                        <i class="bi bi-person-plus-fill" style="font-size: 4rem; color: #667eea;"></i>
-                        <h2 class="mt-3">Crear Cuenta</h2>
-                        <p class="text-muted">Únete a Multi-Herramientas</p>
-                    </div>
-
-                    <form method="POST">
-                        {{ form.hidden_tag() }}
-
-                        <div class="mb-3">
-                            {{ form.username.label(class="form-label") }}
-                            {{ form.username(class="form-control") }}
-                            {% for error in form.username.errors %}
-                                <div class="text-danger mt-1">{{ error }}</div>
-                            {% endfor %}
-                        </div>
-
-                        <div class="mb-3">
-                            {{ form.email.label(class="form-label") }}
-                            {{ form.email(class="form-control") }}
-                            {% for error in form.email.errors %}
-                                <div class="text-danger mt-1">{{ error }}</div>
-                            {% endfor %}
-                        </div>
-
-                        <div class="mb-3">
-                            {{ form.password.label(class="form-label") }}
-                            {{ form.password(class="form-control") }}
-                            {% for error in form.password.errors %}
-                                <div class="text-danger mt-1">{{ error }}</div>
-                            {% endfor %}
-                        </div>
-
-                        <div class="mb-3">
-                            {{ form.password2.label(class="form-label") }}
-                            {{ form.password2(class="form-control") }}
-                            {% for error in form.password2.errors %}
-                                <div class="text-danger mt-1">{{ error }}</div>
-                            {% endfor %}
-                        </div>
-
-                        {{ form.submit(class="btn btn-gradient btn-lg w-100 mb-3") }}
-                    </form>
-
-                    <div class="text-center">
-                        <p class="text-muted">¿Ya tienes cuenta?
-                            <a href="{{ url_for('login') }}" class="text-decoration-none">Inicia sesión</a>
-                        </p>
-                    </div>
-                </div>
+<div class="max-w-md mx-auto mt-20">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+        <div class="text-center mb-8">
+            <div class="text-6xl mb-4">📝</div>
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Crear Cuenta</h1>
+            <p class="text-gray-600 dark:text-gray-400">Únete a Multi-Herramientas</p>
+        </div>
+        <form method="POST">
+            {{ form.hidden_tag() }}
+            <div class="mb-4">
+                <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Usuario</label>
+                {{ form.username(class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white") }}
+                {% for error in form.username.errors %}
+                    <div class="text-red-500 text-sm mt-1">{{ error }}</div>
+                {% endfor %}
             </div>
+            <div class="mb-4">
+                <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Email</label>
+                {{ form.email(class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white") }}
+                {% for error in form.email.errors %}
+                    <div class="text-red-500 text-sm mt-1">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Contraseña</label>
+                {{ form.password(class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white") }}
+                {% for error in form.password.errors %}
+                    <div class="text-red-500 text-sm mt-1">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Repetir Contraseña</label>
+                {{ form.password2(class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white") }}
+                {% for error in form.password2.errors %}
+                    <div class="text-red-500 text-sm mt-1">{{ error }}</div>
+                {% endfor %}
+            </div>
+            <button type="submit" class="w-full bg-primary hover:bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold transition">Registrarse</button>
+        </form>
+        <div class="text-center mt-6">
+            <p class="text-gray-600 dark:text-gray-400">¿Ya tienes cuenta? <a href="{{ url_for(\047login\047) }}" class="text-primary hover:underline">Inicia sesión</a></p>
         </div>
     </div>
+</div>
 {% endblock %}

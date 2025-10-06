@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Imágenes → PDF{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="text-center mb-8">
+        <div class="text-6xl mb-4">📄</div>
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Imágenes → PDF</h1>
+        <p class="text-gray-600 dark:text-gray-400">Convierte JPG, PNG, WEBP a PDF en segundos</p>
+    </div>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+        <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-primary transition" id="dropZone" onclick="document.getElementById(\047fileInput\047).click()">
+            <input type="file" id="fileInput" accept="image/*" multiple style="display: none">
+            <div class="text-4xl mb-4">🖼️</div>
+            <div class="text-lg font-semibold mb-2">Seleccionar imágenes</div>
+            <div class="text-gray-500">JPG, PNG, WEBP, GIF</div>
+            <div id="fileList" class="mt-4"></div>
+        </div>
+        <button class="w-full mt-6 bg-primary hover:bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold transition" id="convertBtn" disabled onclick="convert()">Convertir a PDF</button>
+        <div id="loading" class="text-center py-8 hidden">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
+        </div>
+    </div>
+</div>
+<script>
+let files=[];const dropZone=document.getElementById("dropZone"),fileInput=document.getElementById("fileInput"),fileList=document.getElementById("fileList"),convertBtn=document.getElementById("convertBtn");
+dropZone.ondragover=e=>{e.preventDefault();dropZone.classList.add("border-primary")};
+dropZone.ondragleave=()=>dropZone.classList.remove("border-primary");
+dropZone.ondrop=e=>{e.preventDefault();dropZone.classList.remove("border-primary");handleFiles(e.dataTransfer.files)};
+fileInput.onchange=e=>handleFiles(e.target.files);
+function handleFiles(newFiles){files=Array.from(newFiles).filter(f=>f.type.startsWith("image/"));if(files.length===0){alert("Solo imágenes");return}fileList.innerHTML=files.map((f,i)=>\047<div class="text-sm py-2 border-t">🖼️ \047+f.name+\047</div>\047).join("");convertBtn.disabled=false}
+async function convert(){if(files.length===0)return;convertBtn.disabled=true;document.getElementById("loading").classList.remove("hidden");const fd=new FormData();files.forEach(f=>fd.append("files[]",f));try{const r=await fetch("/api/images-to-pdf",{method:"POST",body:fd});if(r.ok){const blob=await r.blob(),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="imagenes.pdf";a.click();URL.revokeObjectURL(url)}else alert("Error")}catch(e){alert("Error: "+e)}finally{convertBtn.disabled=false;document.getElementById("loading").classList.add("hidden")}}
+</script>
+{% endblock %}

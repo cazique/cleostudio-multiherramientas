@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Dividir PDF{% endblock %}
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="text-center mb-8">
+        <div class="text-6xl mb-4">✂️</div>
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Dividir PDF</h1>
+        <p class="text-gray-600 dark:text-gray-400">Extrae páginas específicas de un archivo PDF</p>
+    </div>
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
+        <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center cursor-pointer hover:border-primary transition" id="dropZone" onclick="document.getElementById(\047fileInput\047).click()">
+            <input type="file" id="fileInput" accept=".pdf" style="display: none">
+            <div class="text-4xl mb-4">📁</div>
+            <div class="text-lg font-semibold mb-2">Seleccionar archivo PDF</div>
+            <div id="fileName" class="text-gray-500 mt-2"></div>
+        </div>
+        <div id="pageInput" class="mt-6 hidden">
+            <label class="block text-sm font-semibold mb-2">Páginas a extraer:</label>
+            <input type="text" id="pages" placeholder="Ej: 1,3,5-7" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
+            <p class="text-xs text-gray-500 mt-2">Formato: números separados por comas (1,2,3) o rangos (1-5)</p>
+        </div>
+        <button class="w-full mt-6 bg-primary hover:bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold transition" id="splitBtn" disabled onclick="split()">Dividir PDF</button>
+        <div id="loading" class="text-center py-8 hidden">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary border-t-transparent"></div>
+        </div>
+    </div>
+</div>
+<script>
+let file=null;const dropZone=document.getElementById("dropZone"),fileInput=document.getElementById("fileInput"),fileName=document.getElementById("fileName"),pageInput=document.getElementById("pageInput"),splitBtn=document.getElementById("splitBtn");
+dropZone.ondragover=e=>{e.preventDefault();dropZone.classList.add("border-primary")};
+dropZone.ondragleave=()=>dropZone.classList.remove("border-primary");
+dropZone.ondrop=e=>{e.preventDefault();dropZone.classList.remove("border-primary");handleFile(e.dataTransfer.files[0])};
+fileInput.onchange=e=>handleFile(e.target.files[0]);
+function handleFile(f){if(!f||f.type!=="application/pdf"){alert("Solo archivos PDF");return}file=f;fileName.textContent=\047📄 \047+f.name;pageInput.classList.remove("hidden");splitBtn.disabled=false}
+async function split(){if(!file)return;const pages=document.getElementById("pages").value.trim();if(!pages){alert("Especifica las páginas");return}splitBtn.disabled=true;document.getElementById("loading").classList.remove("hidden");const fd=new FormData();fd.append("file",file);fd.append("pages",pages);try{const r=await fetch("/api/split-pdf",{method:"POST",body:fd});if(r.ok){const blob=await r.blob(),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=\047dividido_\047+file.name;a.click();URL.revokeObjectURL(url)}else alert("Error")}catch(e){alert("Error: "+e)}finally{splitBtn.disabled=false;document.getElementById("loading").classList.add("hidden")}}
+</script>
+{% endblock %}
