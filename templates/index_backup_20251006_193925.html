@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="text-center mb-8">
+    <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-3">Todas las herramientas que necesitas</h1>
+    <p class="text-lg text-gray-600 dark:text-gray-400">Trabaja con PDFs, analiza redes, verifica seguridad. 100% GRATIS.</p>
+</div>
+
+<!-- Categorías -->
+<div class="flex justify-center gap-3 mb-10 flex-wrap">
+    <button onclick="filterCategory(\"all\")" class="cat-btn active px-6 py-2.5 rounded-full font-semibold transition bg-gray-900 dark:bg-white text-white dark:text-gray-900">
+        Todos
+    </button>
+    <button onclick="filterCategory(\"pdf\")" class="cat-btn px-6 py-2.5 rounded-full font-semibold transition bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600">
+        📄 PDF
+    </button>
+    <button onclick="filterCategory(\"optimizar\")" class="cat-btn px-6 py-2.5 rounded-full font-semibold transition bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600">
+        ⚡ Optimizar
+    </button>
+    <button onclick="filterCategory(\"crear\")" class="cat-btn px-6 py-2.5 rounded-full font-semibold transition bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600">
+        ✨ Crear
+    </button>
+    <button onclick="filterCategory(\"editar\")" class="cat-btn px-6 py-2.5 rounded-full font-semibold transition bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600">
+        ✂️ Editar
+    </button>
+    <button onclick="filterCategory(\"seguridad\")" class="cat-btn px-6 py-2.5 rounded-full font-semibold transition bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-300 dark:hover:bg-gray-600">
+        🔒 Seguridad
+    </button>
+</div>
+
+<!-- Grid de herramientas -->
+<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4" id="toolsGrid">
+    <!-- MD to PDF -->
+    <a href="/md-to-pdf" data-category="pdf crear" class="tool-card group bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
+        <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-red-500 to-pink-500 flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition">
+            📝
+        </div>
+        <h3 class="font-bold text-gray-900 dark:text-white mb-1 text-sm">Markdown → PDF</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">Convierte Markdown a PDF con formato profesional</p>
+    </a>
+
+    <!-- Comprimir PDF -->
+    <a href="/compress-pdf" data-category="pdf optimizar" class="tool-card group bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
+        <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-teal-500 to-cyan-500 flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition">
+            🗜️
+        </div>
+        <h3 class="font-bold text-gray-900 dark:text-white mb-1 text-sm">Comprimir PDF</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">Reduce el tamaño sin perder calidad</p>
+    </a>
+
+    <!-- Combinar PDF -->
+    <a href="/merge-pdf" data-category="pdf editar" class="tool-card group bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
+        <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition">
+            📚
+        </div>
+        <h3 class="font-bold text-gray-900 dark:text-white mb-1 text-sm">Combinar PDFs</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">Une múltiples PDFs en uno solo</p>
+    </a>
+
+    <!-- Dividir PDF -->
+    <a href="/split-pdf" data-category="pdf editar" class="tool-card group bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
+        <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-yellow-500 to-amber-500 flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition">
+            ✂️
+        </div>
+        <h3 class="font-bold text-gray-900 dark:text-white mb-1 text-sm">Dividir PDF</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">Extrae páginas específicas fácilmente</p>
+    </a>
+
+    <!-- Imágenes a PDF -->
+    <a href="/images-to-pdf" data-category="pdf crear" class="tool-card group bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
+        <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-gray-500 to-slate-500 flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition">
+            📄
+        </div>
+        <h3 class="font-bold text-gray-900 dark:text-white mb-1 text-sm">Imágenes → PDF</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">Convierte JPG, PNG a PDF al instante</p>
+    </a>
+
+    <!-- Comprimir Imagen -->
+    <a href="/compress-image" data-category="optimizar" class="tool-card group bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
+        <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-pink-500 to-rose-500 flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition">
+            🎨
+        </div>
+        <h3 class="font-bold text-gray-900 dark:text-white mb-1 text-sm">Comprimir Imagen</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">Optimiza imágenes sin pérdida visible</p>
+    </a>
+
+    <!-- IP WHOIS -->
+    <a href="/ip-whois" data-category="seguridad" class="tool-card group bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
+        <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-500 flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition">
+            📜
+        </div>
+        <h3 class="font-bold text-gray-900 dark:text-white mb-1 text-sm">IP WHOIS</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">Consulta información de direcciones IP</p>
+    </a>
+
+    <!-- Blacklist Check -->
+    <a href="/blacklist-check" data-category="seguridad" class="tool-card group bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
+        <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition">
+            🛡️
+        </div>
+        <h3 class="font-bold text-gray-900 dark:text-white mb-1 text-sm">Blacklist Check</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">Verifica si una IP está listada</p>
+    </a>
+
+    <!-- SSL Check -->
+    <a href="/ssl-check" data-category="seguridad" class="tool-card group bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
+        <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition">
+            ✅
+        </div>
+        <h3 class="font-bold text-gray-900 dark:text-white mb-1 text-sm">SSL Check</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">Analiza certificados SSL/TLS</p>
+    </a>
+
+    <!-- Port Scanner -->
+    <a href="/port-scanner" data-category="seguridad" class="tool-card group bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
+        <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition">
+            📡
+        </div>
+        <h3 class="font-bold text-gray-900 dark:text-white mb-1 text-sm">Port Scanner</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">Escanea puertos abiertos en hosts</p>
+    </a>
+
+    <!-- HTTP Headers -->
+    <a href="/http-headers" data-category="seguridad" class="tool-card group bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
+        <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-amber-500 to-yellow-500 flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition">
+            📑
+        </div>
+        <h3 class="font-bold text-gray-900 dark:text-white mb-1 text-sm">HTTP Headers</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">Analiza cabeceras HTTP de sitios</p>
+    </a>
+
+    <!-- Password Generator -->
+    <a href="/password-generator" data-category="seguridad crear" class="tool-card group bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
+        <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition">
+            🔑
+        </div>
+        <h3 class="font-bold text-gray-900 dark:text-white mb-1 text-sm">Password Generator</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">Genera contraseñas seguras al azar</p>
+    </a>
+
+    <!-- MX Lookup -->
+    <a href="/mx-lookup" data-category="seguridad" class="tool-card group bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
+        <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-sky-500 to-blue-500 flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition">
+            📮
+        </div>
+        <h3 class="font-bold text-gray-900 dark:text-white mb-1 text-sm">MX Lookup</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">Consulta servidores de correo</p>
+    </a>
+
+    <!-- DNS Lookup -->
+    <a href="/dns-lookup" data-category="seguridad" class="tool-card group bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
+        <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition">
+            🔍
+        </div>
+        <h3 class="font-bold text-gray-900 dark:text-white mb-1 text-sm">DNS Lookup</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">Consulta registros DNS completos</p>
+    </a>
+
+    <!-- SPF Check -->
+    <a href="/spf-check" data-category="seguridad" class="tool-card group bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
+        <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-teal-500 to-green-500 flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition">
+            🛡️
+        </div>
+        <h3 class="font-bold text-gray-900 dark:text-white mb-1 text-sm">SPF Check</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">Verifica configuración SPF email</p>
+    </a>
+
+    <!-- DKIM Check -->
+    <a href="/dkim-check" data-category="seguridad" class="tool-card group bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all hover:-translate-y-1 border border-gray-100 dark:border-gray-700">
+        <div class="w-16 h-16 rounded-xl bg-gradient-to-br from-cyan-500 to-teal-500 flex items-center justify-center text-3xl mb-4 group-hover:scale-110 transition">
+            🔑
+        </div>
+        <h3 class="font-bold text-gray-900 dark:text-white mb-1 text-sm">DKIM Check</h3>
+        <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">Valida firmas DKIM de emails</p>
+    </a>
+</div>
+
+<script>
+function filterCategory(cat) {
+    const tools = document.querySelectorAll(".tool-card");
+    const btns = document.querySelectorAll(".cat-btn");
+    
+    btns.forEach(b => {
+        b.classList.remove("active", "bg-gray-900", "dark:bg-white", "text-white", "dark:text-gray-900");
+        b.classList.add("bg-gray-200", "dark:bg-gray-700", "text-gray-900", "dark:text-white");
+    });
+    
+    event.target.classList.add("active", "bg-gray-900", "dark:bg-white", "text-white", "dark:text-gray-900");
+    event.target.classList.remove("bg-gray-200", "dark:bg-gray-700", "text-gray-900", "dark:text-white");
+    
+    tools.forEach(t => {
+        if (cat === "all" || t.dataset.category.includes(cat)) {
+            t.style.display = "block";
+        } else {
+            t.style.display = "none";
+        }
+    });
+}
+</script>
+{% endblock %}

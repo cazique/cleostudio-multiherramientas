@@ -1,768 +1,248 @@
-import io
-import ipaddress
 import os
-import re
-import secrets
-import socket
-import ssl
-import string
+from flask import Flask, render_template, request, redirect, url_for, flash
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
+from flask_sqlalchemy import SQLAlchemy
+from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 
-import img2pdf
-import markdown
-from PIL import Image
-from PyPDF2 import PdfReader, PdfWriter, PdfMerger
-from flask import Flask, render_template, request, redirect, url_for, flash, send_file, jsonify
-import requests
-import whois
-from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-from xhtml2pdf import pisa
-import dns.resolver
-import dns.reversename
-
-from config import Config
-from forms import LoginForm, RegistrationForm
-from models import db, User, ToolUsage
-
+# Inicialización de Flask
 app = Flask(__name__)
-app.config.from_object(Config)
-app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024
-app.config["UPLOAD_FOLDER"] = "uploads"
+app.config['SECRET_KEY'] = 'dev-secret-key-change-in-production'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///multitools.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-os.makedirs("uploads", exist_ok=True)
+# Inicialización de extensiones
+db = SQLAlchemy(app)
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
+login_manager.login_message = 'Por favor inicia sesión para acceder'
 
-ALLOWED_EXTENSIONS = {"pdf", "png", "jpg", "jpeg", "gif", "webp", "md", "txt"}
+# Modelos
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255))
+    is_admin = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-def allowed_file(filename):
-    return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
+    @property
+    def is_active(self):
+        return True
 
-db.init_app(app)
-login_manager = LoginManager()
-login_manager.init_app(app)
-login_manager.login_view = "login"
-login_manager.login_message = "Inicia sesión"
+    @property
+    def is_authenticated(self):
+        return True
+
+    @property
+    def is_anonymous(self):
+        return False
+
+    def get_id(self):
+        return str(self.id)
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+class ToolUsage(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    tool_name = db.Column(db.String(100))
+    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
 
+# Inicializar base de datos
 def init_db():
     with app.app_context():
         db.create_all()
-        admin = User.query.filter_by(username="admin").first()
+
+        # Crear usuario admin si no existe
+        admin = User.query.filter_by(username='admin').first()
         if not admin:
-            admin = User(username="admin", email="admin@multitools.com", is_admin=True)
-            admin.set_password("admin123")
+            admin = User(
+                username='admin',
+                email='admin@multitools.com',
+                is_admin=True
+            )
+            admin.set_password('admin123')
             db.session.add(admin)
             db.session.commit()
-            print("Base de datos inicializada correctamente")
+            print("✓ Usuario admin creado")
 
-# Inicializar BD al arrancar
-with app.app_context():
-    try:
-        db.create_all()
-        admin = User.query.filter_by(username="admin").first()
-        if not admin:
-            admin = User(username="admin", email="admin@multitools.com", is_admin=True)
-            admin.set_password("admin123")
-            db.session.add(admin)
-            db.session.commit()
-            print("✓ Admin creado: admin/admin123")
-    except Exception as e:
-        print(f"Error inicializando BD: {e}")
+# Rutas básicas
+@app.route('/')
+def index():
+    if current_user.is_authenticated:
+        return render_template('index.html')
+    return redirect(url_for('login'))
 
-# AUTENTICACIÓN
-@app.route("/login", methods=["GET", "POST"])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for("index"))
-    form = LoginForm()
-    if form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first()
-        if user and user.check_password(form.password.data):
-            login_user(user, remember=form.remember_me.data)
-            flash("Bienvenido", "success")
-            return redirect(request.args.get("next") or url_for("index"))
-        flash("Usuario o contraseña incorrectos", "danger")
-    return render_template("login.html", form=form)
+        return redirect(url_for('index'))
 
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    if current_user.is_authenticated:
-        return redirect(url_for("index"))
-    form = RegistrationForm()
-    if form.validate_on_submit():
-        user = User(username=form.username.data, email=form.email.data)
-        user.set_password(form.password.data)
-        db.session.add(user)
-        db.session.commit()
-        flash("Registro exitoso", "success")
-        return redirect(url_for("login"))
-    return render_template("register.html", form=form)
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        remember = request.form.get('remember', False)
 
-@app.route("/logout")
+        user = User.query.filter_by(username=username).first()
+
+        if user and user.check_password(password):
+            login_user(user, remember=remember)
+            flash('Inicio de sesión exitoso', 'success')
+            next_page = request.args.get('next')
+            return redirect(next_page or url_for('index'))
+
+        flash('Usuario o contraseña incorrectos', 'danger')
+
+    return render_template('login.html')
+
+@app.route('/logout')
 @login_required
 def logout():
     logout_user()
-    return redirect(url_for("login"))
+    flash('Sesión cerrada', 'info')
+    return redirect(url_for('login'))
 
-@app.route("/")
-@login_required
-def index():
-    return render_template("index.html")
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
 
-# ADMIN
-@app.route("/admin")
-@login_required
-def admin():
-    if not current_user.is_admin:
-        flash("No autorizado", "danger")
-        return redirect(url_for("index"))
-    users = User.query.all()
-    return render_template("admin.html", users=users, total_users=User.query.count(),
-                         total_usage=ToolUsage.query.count(),
-                         recent_usage=ToolUsage.query.order_by(ToolUsage.timestamp.desc()).limit(10).all())
+    if request.method == 'POST':
+        username = request.form.get('username')
+        email = request.form.get('email')
+        password = request.form.get('password')
 
-@app.route("/admin/delete-user/<int:user_id>", methods=["POST"])
-@login_required
-def delete_user(user_id):
-    if not current_user.is_admin or user_id == current_user.id:
-        return jsonify({"success": False}), 403
-    user = User.query.get_or_404(user_id)
-    db.session.delete(user)
-    db.session.commit()
-    return jsonify({"success": True})
+        # Validación básica
+        if User.query.filter_by(username=username).first():
+            flash('El usuario ya existe', 'danger')
+            return render_template('register.html')
 
-@app.route("/admin/toggle-admin/<int:user_id>", methods=["POST"])
-@login_required
-def toggle_admin(user_id):
-    if not current_user.is_admin:
-        return jsonify({"success": False}), 403
-    user = User.query.get_or_404(user_id)
-    user.is_admin = not user.is_admin
-    db.session.commit()
-    return jsonify({"success": True})
+        if User.query.filter_by(email=email).first():
+            flash('El email ya está registrado', 'danger')
+            return render_template('register.html')
 
-# PDF/IMAGEN TOOLS
-@app.route("/md-to-pdf")
+        # Crear usuario
+        user = User(username=username, email=email)
+        user.set_password(password)
+        db.session.add(user)
+        db.session.commit()
+
+        flash('Registro exitoso. Inicia sesión', 'success')
+        return redirect(url_for('login'))
+
+    return render_template('register.html')
+
+# Páginas de herramientas
+@app.route('/md-to-pdf')
 @login_required
 def md_to_pdf_page():
-    return render_template("md_to_pdf.html")
+    return render_template('md_to_pdf.html')
 
-@app.route("/compress-pdf")
+@app.route('/compress-pdf')
 @login_required
 def compress_pdf_page():
-    return render_template("compress_pdf.html")
+    return render_template('compress_pdf.html')
 
-@app.route("/merge-pdf")
+@app.route('/merge-pdf')
 @login_required
 def merge_pdf_page():
-    return render_template("merge_pdf.html")
+    return render_template('merge_pdf.html')
 
-@app.route("/split-pdf")
+@app.route('/split-pdf')
 @login_required
 def split_pdf_page():
-    return render_template("split_pdf.html")
+    return render_template('split_pdf.html')
 
-@app.route("/images-to-pdf")
+@app.route('/images-to-pdf')
 @login_required
 def images_to_pdf_page():
-    return render_template("images_to_pdf.html")
+    return render_template('images_to_pdf.html')
 
-@app.route("/compress-image")
+@app.route('/compress-image')
 @login_required
 def compress_image_page():
-    return render_template("compress_image.html")
+    return render_template('compress_image.html')
 
-@app.route("/api/preview-markdown", methods=["POST"])
-def preview_markdown():
-    try:
-        data = request.get_json()
-        md_content = data.get("markdown", "")
-        html = markdown.markdown(md_content, extensions=["tables", "fenced_code", "nl2br"])
-        return jsonify({"success": True, "html": html})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 400
-
-@app.route("/api/generate-pdf", methods=["POST"])
-def generate_pdf():
-    try:
-        data = request.get_json()
-        md_content = data.get("markdown", "")
-        filename = data.get("filename", "documento")
-        html_content = markdown.markdown(md_content, extensions=["tables", "fenced_code", "nl2br", "sane_lists"])
-        css = """<style>@page{size:A4;margin:2cm}body{font-family:Arial,sans-serif;line-height:1.6;color:#333;font-size:12pt}h1{color:#2c3e50;border-bottom:3px solid #3498db;padding-bottom:10px;margin-top:20px;font-size:24pt}h2{color:#2c3e50;border-bottom:2px solid #95a5a6;padding-bottom:8px;margin-top:18px;font-size:20pt}code{background-color:#f4f4f4;padding:2px 6px;border-radius:3px;color:#c7254e;font-family:monospace}pre{background-color:#282c34;color:#abb2bf;padding:15px;border-radius:5px;overflow-x:auto}blockquote{border-left:4px solid #3498db;padding-left:15px;margin-left:0;color:#555;font-style:italic;background-color:#f9f9f9;padding:10px 15px}table{border-collapse:collapse;width:100%;margin:15px 0}th,td{border:1px solid #ddd;padding:10px;text-align:left}th{background-color:#3498db;color:white;font-weight:600}tr:nth-child(even){background-color:#f9f9f9}</style>"""
-        html_full = f"<!DOCTYPE html><html><head><meta charset='UTF-8'>{css}</head><body>{html_content}</body></html>"
-        buffer = io.BytesIO()
-        pisa_status = pisa.CreatePDF(html_full, dest=buffer)
-        if pisa_status.err:
-            return jsonify({"success": False, "error": "Error al generar PDF"}), 500
-        buffer.seek(0)
-        safe_filename = "".join(c for c in filename if c.isalnum() or c in (" ", "-", "_")).strip() or "documento"
-        return send_file(buffer, mimetype="application/pdf", as_attachment=True, download_name=f"{safe_filename}.pdf")
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-@app.route("/api/compress-pdf", methods=["POST"])
-def compress_pdf():
-    try:
-        if "file" not in request.files:
-            return jsonify({"success": False, "error": "No hay archivo"}), 400
-        file = request.files["file"]
-        reader = PdfReader(io.BytesIO(file.read()))
-        writer = PdfWriter()
-        for page in reader.pages:
-            page.compress_content_streams()
-            writer.add_page(page)
-        buffer = io.BytesIO()
-        writer.write(buffer)
-        buffer.seek(0)
-        return send_file(buffer, mimetype="application/pdf", as_attachment=True, download_name=f"comprimido_{file.filename}")
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-@app.route("/api/merge-pdfs", methods=["POST"])
-def merge_pdfs():
-    try:
-        files = request.files.getlist("files[]")
-        if len(files) < 2:
-            return jsonify({"success": False, "error": "Necesitas al menos 2 PDFs"}), 400
-        merger = PdfMerger()
-        for file in files:
-            merger.append(io.BytesIO(file.read()))
-        buffer = io.BytesIO()
-        merger.write(buffer)
-        buffer.seek(0)
-        return send_file(buffer, mimetype="application/pdf", as_attachment=True, download_name="combinado.pdf")
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-@app.route("/api/compress-image", methods=["POST"])
-def compress_image():
-    try:
-        if "file" not in request.files:
-            return jsonify({"success": False, "error": "No hay archivo"}), 400
-        file = request.files["file"]
-        level = request.form.get("level", "normal")
-        img = Image.open(file)
-        if img.mode == "RGBA":
-            bg = Image.new("RGB", img.size, (255, 255, 255))
-            bg.paste(img, mask=img.split()[3])
-            img = bg
-        quality = {"light": 90, "normal": 85, "aggressive": 70}.get(level, 85)
-        buffer = io.BytesIO()
-        img.save(buffer, format="JPEG", quality=quality, optimize=True)
-        buffer.seek(0)
-        return send_file(buffer, mimetype="image/jpeg", as_attachment=True, download_name=f"optimizada_{file.filename}")
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-@app.route("/api/split-pdf", methods=["POST"])
-def split_pdf_api():
-    try:
-        if "file" not in request.files:
-            return jsonify({"success": False, "error": "No hay archivo PDF."}), 400
-        file = request.files["file"]
-        pages_str = request.form.get("pages", "")
-        if not allowed_file(file.filename) or file.mimetype != "application/pdf":
-            return jsonify({"success": False, "error": "El archivo debe ser un PDF."}), 400
-        if not pages_str:
-            return jsonify({"success": False, "error": "Debes especificar las páginas a extraer."}), 400
-        reader = PdfReader(io.BytesIO(file.read()))
-        writer = PdfWriter()
-        total_pages = len(reader.pages)
-        try:
-            pages_to_extract = set()
-            for part in pages_str.split(","):
-                if "-" in part:
-                    start, end = map(int, part.split("-"))
-                    if start < 1 or end > total_pages or start > end:
-                        raise ValueError("Rango de páginas inválido.")
-                    pages_to_extract.update(range(start - 1, end))
-                else:
-                    page_num = int(part)
-                    if page_num < 1 or page_num > total_pages:
-                        raise ValueError("Número de página fuera de rango.")
-                    pages_to_extract.add(page_num - 1)
-        except ValueError as e:
-            return jsonify({"success": False, "error": f"Páginas inválidas: {e}"}), 400
-        for i in sorted(list(pages_to_extract)):
-            writer.add_page(reader.pages[i])
-        if not writer.pages:
-            return jsonify({"success": False, "error": "No se extrajo ninguna página."}), 400
-        buffer = io.BytesIO()
-        writer.write(buffer)
-        buffer.seek(0)
-        return send_file(buffer, mimetype="application/pdf", as_attachment=True, download_name=f"dividido_{file.filename}")
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-@app.route("/api/images-to-pdf", methods=["POST"])
-def images_to_pdf_api():
-    try:
-        files = request.files.getlist("files[]")
-        if not files:
-            return jsonify({"success": False, "error": "No hay imágenes"}), 400
-        images = []
-        for file in files:
-            img = Image.open(file)
-            if img.mode == "RGBA":
-                bg = Image.new("RGB", img.size, (255, 255, 255))
-                bg.paste(img, mask=img.split()[3])
-                img = bg
-            img_bytes = io.BytesIO()
-            img.save(img_bytes, format="JPEG")
-            images.append(img_bytes.getvalue())
-        pdf_bytes = img2pdf.convert(images)
-        buffer = io.BytesIO(pdf_bytes)
-        buffer.seek(0)
-        return send_file(buffer, mimetype="application/pdf", as_attachment=True, download_name="imagenes.pdf")
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-# IP TOOLS
-@app.route("/ip-whois")
+@app.route('/ip-whois')
 @login_required
 def ip_whois_page():
-    return render_template("ip_whois.html")
+    return render_template('ip_whois.html')
 
-@app.route("/api/ip-whois", methods=["POST"])
-def ip_whois_api():
-    ip_str = request.form.get("ip", "").strip()
-    if not ip_str:
-        return jsonify({"success": False, "error": "Se requiere una dirección IP."}), 400
-    try:
-        ip_obj = ipaddress.ip_address(ip_str)
-        if ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_unspecified or ip_obj.is_reserved:
-            return jsonify({"success": False, "error": "No se permiten IPs privadas, loopback o reservadas."}), 400
-        w = whois.whois(ip_str)
-        whois_data = {k: v for k, v in getattr(w, "__dict__", {}).items() if v and not k.startswith("_")}
-        if not whois_data:
-            return jsonify({"success": False, "error": "No se encontró información WHOIS para esta IP."}), 404
-        return jsonify({"success": True, "data": whois_data})
-    except ValueError:
-        return jsonify({"success": False, "error": "La dirección IP no es válida."}), 400
-    except Exception as e:
-        return jsonify({"success": False, "error": f"No se pudo completar la consulta WHOIS: {str(e)}"}), 500
-
-DNSBL_SERVERS = ["bl.spamcop.net", "cbl.abuseat.org", "zen.spamhaus.org", "b.barracudacentral.org",
-                 "dnsbl.sorbs.net", "spam.dnsbl.sorbs.net", "all.s5h.net", "psbl.surriel.com",
-                 "dnsbl.spfbl.net", "ubl.unsubscore.com"]
-
-@app.route("/blacklist-check")
+@app.route('/blacklist-check')
 @login_required
 def blacklist_check_page():
-    return render_template("blacklist_check.html")
+    return render_template('blacklist_check.html')
 
-@app.route("/api/blacklist-check", methods=["POST"])
-def blacklist_check_api():
-    ip_str = request.form.get("ip", "").strip()
-    if not ip_str:
-        return jsonify({"success": False, "error": "Se requiere una dirección IP."}), 400
-    try:
-        ip_obj = ipaddress.ip_address(ip_str)
-        if not ip_obj.version == 4:
-            return jsonify({"success": False, "error": "Actualmente solo se soportan direcciones IPv4."}), 400
-        if ip_obj.is_private or ip_obj.is_loopback:
-            return jsonify({"success": False, "error": "No se pueden verificar IPs privadas o de loopback."}), 400
-    except ValueError:
-        return jsonify({"success": False, "error": "La dirección IP no es válida."}), 400
-    reversed_ip = ip_obj.reverse_pointer.replace(".in-addr.arpa", "")
-    results = []
-    listed_count = 0
-    for server in DNSBL_SERVERS:
-        query = f"{reversed_ip}.{server}"
-        try:
-            socket.gethostbyname(query)
-            results.append({"server": server, "listed": True})
-            listed_count += 1
-        except socket.gaierror:
-            results.append({"server": server, "listed": False})
-        except Exception:
-            results.append({"server": server, "listed": "error"})
-    return jsonify({"success": True, "data": {"ip": ip_str, "total_checked": len(DNSBL_SERVERS),
-                                              "listed_count": listed_count, "results": results}})
-
-# SECURITY TOOLS
-@app.route("/ssl-check")
+@app.route('/ssl-check')
 @login_required
 def ssl_check_page():
-    return render_template("ssl_check.html")
+    return render_template('ssl_check.html')
 
-@app.route("/api/ssl-check", methods=["POST"])
-def ssl_check_api():
-    hostname = request.form.get("hostname", "").strip()
-    if not hostname:
-        return jsonify({"success": False, "error": "Se requiere un nombre de host."}), 400
-    port = 443
-    context = ssl.create_default_context()
-    try:
-        with socket.create_connection((hostname, port), timeout=5) as sock:
-            with context.wrap_socket(sock, server_hostname=hostname) as ssock:
-                cert = ssock.getpeercert()
-        issuer = dict(x[0] for x in cert.get("issuer", []))
-        subject = dict(x[0] for x in cert.get("subject", []))
-        not_after_str = cert.get("notAfter")
-        not_before_str = cert.get("notBefore")
-        alt_names = [name[1] for name in cert.get("subjectAltName", []) if name[0] == "DNS"]
-        try:
-            valid_from = datetime.strptime(not_before_str, "%b %d %H:%M:%S %Y %Z").isoformat() if not_before_str else "N/A"
-            valid_until = datetime.strptime(not_after_str, "%b %d %H:%M:%S %Y %Z").isoformat() if not_after_str else "N/A"
-        except (ValueError, TypeError):
-            valid_from, valid_until = "Formato de fecha inválido", "Formato de fecha inválido"
-        cert_info = {"subject": subject, "issuer": issuer, "version": cert.get("version"),
-                     "serial_number": cert.get("serialNumber"), "valid_from": valid_from,
-                     "valid_until": valid_until, "subject_alt_names": alt_names}
-        return jsonify({"success": True, "data": cert_info})
-    except socket.timeout:
-        return jsonify({"success": False, "error": "La conexión expiró."}), 408
-    except socket.gaierror:
-        return jsonify({"success": False, "error": f"No se pudo resolver el nombre de host: {hostname}"}), 404
-    except ssl.SSLCertVerificationError as e:
-        return jsonify({"success": False, "error": f"Error de verificación: {str(e)}"}), 400
-    except ssl.SSLError as e:
-        return jsonify({"success": False, "error": f"Error de SSL: {str(e)}"}), 400
-    except Exception as e:
-        return jsonify({"success": False, "error": f"Error inesperado: {str(e)}"}), 500
-
-COMMON_PORTS = {21: "FTP", 22: "SSH", 23: "Telnet", 25: "SMTP", 53: "DNS", 80: "HTTP", 110: "POP3",
-                143: "IMAP", 443: "HTTPS", 465: "SMTPS", 587: "SMTP (Sub.)", 993: "IMAPS",
-                995: "POP3S", 2082: "cPanel", 2083: "cPanel (SSL)", 2086: "WHM", 2087: "WHM (SSL)",
-                3306: "MySQL", 5432: "PostgreSQL", 8080: "HTTP Alt."}
-
-@app.route("/port-scanner")
+@app.route('/port-scanner')
 @login_required
 def port_scanner_page():
-    return render_template("port_scanner.html")
+    return render_template('port_scanner.html')
 
-@app.route("/api/port-scan", methods=["POST"])
-def port_scan_api():
-    hostname = request.form.get("hostname", "").strip()
-    if not hostname:
-        return jsonify({"success": False, "error": "Se requiere un nombre de host."}), 400
-    try:
-        ip = socket.gethostbyname(hostname)
-    except socket.gaierror:
-        return jsonify({"success": False, "error": f"No se pudo resolver: {hostname}"}), 404
-    results = []
-    open_ports = 0
-    for port, service in COMMON_PORTS.items():
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(0.5)
-        result = sock.connect_ex((ip, port))
-        status = "Abierto" if result == 0 else "Cerrado"
-        if status == "Abierto":
-            open_ports += 1
-        results.append({"port": port, "service": service, "status": status})
-        sock.close()
-    return jsonify({"success": True, "data": {"hostname": hostname, "ip": ip, "open_ports": open_ports, "results": results}})
-
-@app.route("/http-headers")
+@app.route('/http-headers')
 @login_required
 def http_headers_page():
-    return render_template("http_headers.html")
+    return render_template('http_headers.html')
 
-@app.route("/api/http-headers", methods=["POST"])
-def http_headers_api():
-    url = request.form.get("url", "").strip()
-    if not url:
-        return jsonify({"success": False, "error": "Se requiere una URL."}), 400
-    if not url.startswith(("http://", "https://")):
-        url = "https://" + url
-    try:
-        hostname = url.split("/")[2]
-        ip_addr = socket.gethostbyname(hostname)
-        ip_obj = ipaddress.ip_address(ip_addr)
-        if ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_link_local:
-            return jsonify({"success": False, "error": "URLs privadas/locales no permitidas."}), 403
-    except (socket.gaierror, IndexError):
-        return jsonify({"success": False, "error": "URL o host no válido."}), 400
-    except Exception:
-        return jsonify({"success": False, "error": "No se pudo validar el host."}), 500
-    headers = {"User-Agent": "Multi-Herramientas Flask App / 1.0"}
-    try:
-        response = requests.get(url, headers=headers, timeout=10, allow_redirects=True, verify=True)
-        header_list = sorted([{"name": name, "value": value} for name, value in response.headers.items()], key=lambda x: x["name"])
-        redirect_history = [{"status_code": r.status_code, "url": r.url} for r in response.history]
-        redirect_history.append({"status_code": response.status_code, "url": response.url})
-        return jsonify({"success": True, "data": {"final_url": response.url, "status_code": response.status_code,
-                                                  "headers": header_list, "redirect_history": redirect_history}})
-    except requests.exceptions.Timeout:
-        return jsonify({"success": False, "error": "Timeout."}), 408
-    except requests.exceptions.RequestException as e:
-        return jsonify({"success": False, "error": f"Error: {str(e)}"}), 400
-
-@app.route("/password-generator")
+@app.route('/password-generator')
 @login_required
 def password_gen_page():
-    try:
-        length_raw = request.args.get("length", "16")
-        length = int(length_raw if length_raw and length_raw.isdigit() else 16)
-        length = max(8, min(length, 128))
-    except (ValueError, TypeError):
-        length = 16
-    use_upper = request.args.get("uppercase") == "on"
-    use_lower = request.args.get("lowercase", "on") == "on"
-    use_numbers = request.args.get("numbers") == "on"
-    use_symbols = request.args.get("symbols") == "on"
-    if not any([use_upper, use_lower, use_numbers, use_symbols]):
-        use_upper = use_lower = use_numbers = use_symbols = True
-    password = ""
-    error = None
-    alphabet = ""
-    if use_upper:
-        alphabet += string.ascii_uppercase
-    if use_lower:
-        alphabet += string.ascii_lowercase
-    if use_numbers:
-        alphabet += string.digits
-    if use_symbols:
-        alphabet += string.punctuation
-    if not alphabet:
-        error = "Debes seleccionar al menos un tipo de caracter."
-        use_lower = True
-        alphabet += string.ascii_lowercase
-    if not error:
-        password = "".join(secrets.choice(alphabet) for i in range(length))
-    return render_template("password_generator.html", password=password, error=error,
-                         p_length=length, p_upper=use_upper, p_lower=use_lower,
-                         p_numbers=use_numbers, p_symbols=use_symbols)
+    return render_template('password_generator.html')
 
-# DNS/EMAIL TOOLS
-def _clean_domain(d):
-    d = re.sub(r"^https?://(www\.)?", "", d).split("/")[0].rstrip(".")
-    if not re.match(r"^[A-Za-z0-9.-]+\.[A-Za-z]{2,}$", d):
-        raise ValueError("Dominio inválido")
-    return d
-
-def _resolver():
-    r = dns.resolver.Resolver()
-    r.timeout = 3.0
-    r.lifetime = 5.0
-    return r
-
-@app.route("/mx-lookup")
+@app.route('/mx-lookup')
 @login_required
 def mx_lookup_page():
-    return render_template("mx_lookup.html")
+    return render_template('mx_lookup.html')
 
-@app.route("/api/mx-lookup", methods=["POST"])
-def mx_lookup_api():
-    try:
-        domain = _clean_domain((request.form.get("domain") or "").strip())
-        answers = _resolver().resolve(domain, "MX")
-        mx = [{"priority": r.preference, "server": str(r.exchange).rstrip(".")} for r in answers]
-        mx.sort(key=lambda x: x["priority"])
-        return jsonify({"success": True, "domain": domain, "mx_records": mx, "total": len(mx)})
-    except dns.resolver.NXDOMAIN:
-        return jsonify({"success": False, "error": "Dominio no existe"}), 404
-    except dns.resolver.NoAnswer:
-        return jsonify({"success": False, "error": "Sin registros MX"}), 404
-    except dns.resolver.NoNameservers:
-        return jsonify({"success": False, "error": "Servidores DNS no responden"}), 502
-    except dns.resolver.LifetimeTimeout:
-        return jsonify({"success": False, "error": "Tiempo de espera agotado"}), 504
-    except ValueError as e:
-        return jsonify({"success": False, "error": str(e)}), 400
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-@app.route("/dns-lookup")
+@app.route('/dns-lookup')
 @login_required
 def dns_lookup_page():
-    return render_template("dns_lookup.html")
+    return render_template('dns_lookup.html')
 
-@app.route("/api/dns-lookup", methods=["POST"])
-def dns_lookup_api():
-    try:
-        domain = _clean_domain((request.form.get("domain") or "").strip())
-        record_type = (request.form.get("type") or "A").upper()
-        valid = ["A", "AAAA", "CNAME", "TXT", "NS", "SOA", "MX"]
-        if record_type not in valid:
-            return jsonify({"success": False, "error": "Tipo de registro inválido"}), 400
-        answers = _resolver().resolve(domain, record_type)
-        recs = []
-        for r in answers:
-            if record_type in ("A", "AAAA"):
-                recs.append({"value": str(r)})
-            elif record_type == "CNAME":
-                recs.append({"value": str(r.target).rstrip(".")})
-            elif record_type == "TXT":
-                txt_value = ""
-                if hasattr(r, 'strings'):
-                    txt_value = " ".join([s.decode('utf-8') if isinstance(s, bytes) else str(s) for s in r.strings])
-                else:
-                    txt_value = str(r)
-                recs.append({"value": txt_value})
-            elif record_type == "NS":
-                recs.append({"value": str(r.target).rstrip(".")})
-            elif record_type == "MX":
-                recs.append({"priority": r.preference, "value": str(r.exchange).rstrip(".")})
-            elif record_type == "SOA":
-                recs.append({"mname": str(r.mname).rstrip("."), "rname": str(r.rname).rstrip("."),
-                           "serial": r.serial, "refresh": r.refresh, "retry": r.retry,
-                           "expire": r.expire, "minimum": r.minimum})
-        return jsonify({"success": True, "domain": domain, "type": record_type, "records": recs, "total": len(recs)})
-    except dns.resolver.NXDOMAIN:
-        return jsonify({"success": False, "error": "Dominio no existe"}), 404
-    except dns.resolver.NoAnswer:
-        return jsonify({"success": False, "error": f"Sin registros {record_type}"}), 404
-    except dns.resolver.NoNameservers:
-        return jsonify({"success": False, "error": "Servidores DNS no responden"}), 502
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-@app.route("/reverse-dns")
+@app.route('/reverse-dns')
 @login_required
 def reverse_dns_page():
-    return render_template("reverse_dns.html")
+    return render_template('reverse_dns.html')
 
-@app.route("/api/reverse-dns", methods=["POST"])
-def reverse_dns_api():
-    try:
-        ip = (request.form.get("ip") or "").strip()
-        if not re.match(r"^([0-9]{1,3}\.){3}[0-9]{1,3}$|^[0-9a-fA-F:]+$", ip):
-            return jsonify({"success": False, "error": "IP inválida"}), 400
-        name = dns.reversename.from_address(ip)
-        answers = _resolver().resolve(name, "PTR")
-        hosts = [str(r.target).rstrip(".") for r in answers]
-        return jsonify({"success": True, "ip": ip, "hosts": hosts, "total": len(hosts)})
-    except dns.resolver.NXDOMAIN:
-        return jsonify({"success": False, "error": "No existe PTR"}), 404
-    except dns.resolver.NoAnswer:
-        return jsonify({"success": False, "error": "Sin PTR"}), 404
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-@app.route("/whois-lookup")
+@app.route('/whois-lookup')
 @login_required
 def whois_lookup_page():
-    return render_template("whois_lookup.html")
+    return render_template('whois_lookup.html')
 
-@app.route("/api/whois-lookup", methods=["POST"])
-def whois_lookup_api():
-    try:
-        domain = _clean_domain((request.form.get("domain") or "").strip())
-        w = whois.whois(domain)
-        data = {k: (v.isoformat() if hasattr(v, "isoformat") else v) for k, v in w.__dict__.items() if not k.startswith("_")}
-        return jsonify({"success": True, "domain": domain, "whois": data})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-@app.route("/spf-check")
+@app.route('/spf-check')
 @login_required
 def spf_check_page():
-    return render_template("spf_check.html")
+    return render_template('spf_check.html')
 
-@app.route("/api/spf-check", methods=["POST"])
-def spf_check_api():
-    try:
-        domain = _clean_domain((request.form.get("domain") or "").strip())
-        answers = _resolver().resolve(domain, "TXT")
-        spf = []
-        for r in answers:
-            txt_str = ""
-            if hasattr(r, 'strings'):
-                txt_str = " ".join([s.decode('utf-8') if isinstance(s, bytes) else str(s) for s in r.strings])
-                if "v=spf1" in txt_str:
-                    spf.append(txt_str)
-            else:
-                txt_str = str(r)
-                if "v=spf1" in txt_str:
-                    spf.append(txt_str)
-        if not spf:
-            return jsonify({"success": False, "error": "Sin registro SPF"}), 404
-        return jsonify({"success": True, "domain": domain, "records": spf, "total": len(spf)})
-    except dns.resolver.NXDOMAIN:
-        return jsonify({"success": False, "error": "Dominio no existe"}), 404
-    except dns.resolver.NoAnswer:
-        return jsonify({"success": False, "error": "Sin TXT"}), 404
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-@app.route("/dkim-check")
+@app.route('/dkim-check')
 @login_required
 def dkim_check_page():
-    return render_template("dkim_check.html")
+    return render_template('dkim_check.html')
 
-@app.route("/api/dkim-check", methods=["POST"])
-def dkim_check_api():
-    try:
-        domain = _clean_domain((request.form.get("domain") or "").strip())
-        selector = (request.form.get("selector") or "default").strip()
-        qname = f"{selector}._domainkey.{domain}".rstrip(".")
-        answers = _resolver().resolve(qname, "TXT")
-        txt = []
-        for r in answers:
-            if hasattr(r, 'strings'):
-                txt_value = " ".join([s.decode('utf-8') if isinstance(s, bytes) else str(s) for s in r.strings])
-                txt.append(txt_value)
-            else:
-                txt.append(str(r))
-        return jsonify({"success": True, "domain": domain, "selector": selector, "records": txt, "total": len(txt)})
-    except dns.resolver.NXDOMAIN:
-        return jsonify({"success": False, "error": "Selector/Dominio no existe"}), 404
-    except dns.resolver.NoAnswer:
-        return jsonify({"success": False, "error": "Sin TXT DKIM"}), 404
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-@app.route("/dmarc-check")
+@app.route('/dmarc-check')
 @login_required
 def dmarc_check_page():
-    return render_template("dmarc_check.html")
+    return render_template('dmarc_check.html')
 
-@app.route("/api/dmarc-check", methods=["POST"])
-def dmarc_check_api():
-    try:
-        domain = _clean_domain((request.form.get("domain") or "").strip())
-        qname = f"_dmarc.{domain}"
-        answers = _resolver().resolve(qname, "TXT")
-        pol = []
-        for r in answers:
-            if hasattr(r, 'strings'):
-                txt_value = " ".join([s.decode('utf-8') if isinstance(s, bytes) else str(s) for s in r.strings])
-                pol.append(txt_value)
-            else:
-                pol.append(str(r))
-        if not pol:
-            return jsonify({"success": False, "error": "Sin política DMARC"}), 404
-        return jsonify({"success": True, "domain": domain, "records": pol, "total": len(pol)})
-    except dns.resolver.NXDOMAIN:
-        return jsonify({"success": False, "error": "Dominio sin DMARC"}), 404
-    except dns.resolver.NoAnswer:
-        return jsonify({"success": False, "error": "Sin TXT DMARC"}), 404
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-@app.route("/email-header")
+@app.route('/email-header')
 @login_required
 def email_header_page():
-    return render_template("email_header.html")
+    return render_template('email_header.html')
 
-@app.route("/api/email-header", methods=["POST"])
-def email_header_api():
-    try:
-        raw = (request.form.get("headers") or "").strip()
-        if not raw:
-            return jsonify({"success": False, "error": "Pega los headers"}), 400
-        recvd = re.findall(r"^Received:.*$", raw, flags=re.MULTILINE)
-        auth = re.findall(r"^Authentication-Results:.*$", raw, flags=re.MULTILINE)
-        dkim = bool(re.search(r"^DKIM-Signature:", raw, flags=re.MULTILINE))
-        spf = None
-        m = re.search(r"spf=(pass|fail|softfail|neutral|none|temperror|permerror)", raw, flags=re.IGNORECASE)
-        if m:
-            spf = m.group(1).lower()
-        ip = None
-        ipm = re.search(r"\b(\d{1,3}(?:\.\d{1,3}){3})\b", raw)
-        if ipm:
-            ip = ipm.group(1)
-        return jsonify({"success": True, "received": recvd, "auth_results": auth, "dkim_present": dkim,
-                       "spf_result": spf, "origin_ip_guess": ip})
-    except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
-
-# Error handlers
+# Manejo de errores
 @app.errorhandler(404)
 def not_found(e):
     return render_template('404.html'), 404
@@ -772,11 +252,34 @@ def internal_error(e):
     db.session.rollback()
     return render_template('500.html'), 500
 
-if __name__ == "__main__":
-    print("=" * 50)
-    print("🚀 Iniciando Flask Multi-Herramientas")
-    print("=" * 50)
+
+# RUTA DE DEBUG TEMPORAL
+@app.route('/debug')
+def debug_info():
+    import sys
+    info = {
+        'python_version': sys.version,
+        'flask_working': True,
+        'logged_in': current_user.is_authenticated,
+        'user': current_user.username if current_user.is_authenticated else 'Anonymous'
+    }
+    return f"""
+    <h1>Debug Info</h1>
+    <pre>{info}</pre>
+    <a href="/">Volver al inicio</a>
+    """
+
+if __name__ == '__main__':
+    print("=" * 60)
+    print("🚀 Iniciando Multi-Herramientas Flask")
+    print("=" * 60)
+
+    # Inicializar base de datos
+    init_db()
+
     print(f"📍 URL: http://127.0.0.1:5000")
-    print(f"👤 Admin: admin / admin123")
-    print("=" * 50)
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    print(f"👤 Usuario: admin")
+    print(f"🔑 Contraseña: admin123")
+    print("=" * 60)
+
+    app.run(debug=True, host='0.0.0.0', port=5000)

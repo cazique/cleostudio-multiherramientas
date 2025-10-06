@@ -1,4 +1,56 @@
-{% extends "base.html" %}
+#!/usr/bin/env python3
+"""
+Script de corrección post-login - Error 500 después de autenticación
+Ejecutar: python fix_post_login.py
+"""
+
+import os
+import shutil
+from datetime import datetime
+
+
+def print_header(text):
+    print("\n" + "=" * 60)
+    print(f"  {text}")
+    print("=" * 60)
+
+
+def check_templates_exist():
+    """Verifica que existan todos los templates necesarios"""
+    print_header("Verificando templates")
+
+    required_templates = [
+        'templates/base.html',
+        'templates/index.html',
+        'templates/login.html',
+        'templates/register.html',
+        'templates/404.html',
+        'templates/500.html'
+    ]
+
+    missing = []
+    for template in required_templates:
+        if os.path.exists(template):
+            print(f"✓ {template}")
+        else:
+            print(f"❌ FALTA: {template}")
+            missing.append(template)
+
+    return missing
+
+
+def fix_index_html():
+    """Crea un index.html ultra-simplificado"""
+    print_header("Creando index.html simplificado")
+
+    # Primero, hacer backup si existe
+    if os.path.exists("templates/index.html"):
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup_name = f"templates/index_backup_{timestamp}.html"
+        shutil.copy2("templates/index.html", backup_name)
+        print(f"✓ Backup creado: {backup_name}")
+
+    index_content = '''{% extends "base.html" %}
 {% block title %}Multi-Herramientas{% endblock %}
 
 {% block content %}
@@ -160,3 +212,162 @@
 
 </div>
 {% endblock %}
+'''
+
+    with open("templates/index.html", "w", encoding="utf-8") as f:
+        f.write(index_content)
+
+    print("✓ index.html simplificado creado")
+
+
+def test_app_routes():
+    """Prueba que todas las rutas estén definidas"""
+    print_header("Verificando rutas en app.py")
+
+    try:
+        with open("app.py", "r") as f:
+            content = f.read()
+
+        required_routes = [
+            'md_to_pdf_page',
+            'compress_pdf_page',
+            'merge_pdf_page',
+            'split_pdf_page',
+            'images_to_pdf_page',
+            'compress_image_page',
+            'ip_whois_page',
+            'blacklist_check_page',
+            'ssl_check_page',
+            'port_scanner_page',
+            'http_headers_page',
+            'password_gen_page',
+            'mx_lookup_page',
+            'dns_lookup_page',
+            'spf_check_page',
+            'dkim_check_page'
+        ]
+
+        missing_routes = []
+        for route in required_routes:
+            if f"def {route}" in content:
+                print(f"✓ {route}")
+            else:
+                print(f"❌ FALTA: {route}")
+                missing_routes.append(route)
+
+        return missing_routes
+
+    except Exception as e:
+        print(f"❌ Error al leer app.py: {e}")
+        return []
+
+
+def create_debug_route():
+    """Añade una ruta de debug temporal"""
+    print_header("Añadiendo ruta de debug")
+
+    debug_code = '''
+# RUTA DE DEBUG TEMPORAL
+@app.route('/debug')
+def debug_info():
+    import sys
+    info = {
+        'python_version': sys.version,
+        'flask_working': True,
+        'logged_in': current_user.is_authenticated,
+        'user': current_user.username if current_user.is_authenticated else 'Anonymous'
+    }
+    return f"""
+    <h1>Debug Info</h1>
+    <pre>{info}</pre>
+    <a href="/">Volver al inicio</a>
+    """
+'''
+
+    try:
+        with open("app.py", "r") as f:
+            content = f.read()
+
+        if "@app.route('/debug')" not in content:
+            # Insertar antes del if __name__ == "__main__"
+            content = content.replace(
+                "if __name__ == '__main__':",
+                debug_code + "\nif __name__ == '__main__':"
+            )
+
+            with open("app.py", "w") as f:
+                f.write(content)
+
+            print("✓ Ruta de debug añadida: /debug")
+        else:
+            print("✓ Ruta de debug ya existe")
+    except Exception as e:
+        print(f"❌ Error: {e}")
+
+
+def show_logs_instructions():
+    """Muestra instrucciones para ver logs"""
+    print_header("📋 Ver logs del servidor")
+
+    print("""
+Para ver exactamente qué está causando el error 500:
+
+1. Abre una terminal y ejecuta:
+
+   python app.py
+
+2. En otra terminal o navegador, intenta hacer login
+
+3. Observa la terminal donde corre Flask - verás el error exacto
+
+4. Compárteme el error completo que aparece en la terminal
+
+Ejemplo de lo que buscar:
+   [2024-10-06 19:30:00] ERROR in app: Exception on / [GET]
+   Traceback (most recent call last):
+     File "...", line X, in ...
+
+COPIA TODO ESE TEXTO Y COMPÁRTELO CONMIGO
+""")
+
+
+def main():
+    """Función principal"""
+    print_header("🔧 Corrección Error 500 Post-Login")
+
+    try:
+        # Verificar templates
+        missing_templates = check_templates_exist()
+
+        # Arreglar index.html
+        fix_index_html()
+
+        # Verificar rutas
+        missing_routes = test_app_routes()
+
+        # Añadir debug
+        create_debug_route()
+
+        print_header("✅ CORRECCIONES APLICADAS")
+
+        if missing_templates or missing_routes:
+            print("\n⚠️  ADVERTENCIAS:")
+            if missing_templates:
+                print(f"  - Templates faltantes: {', '.join(missing_templates)}")
+            if missing_routes:
+                print(f"  - Rutas faltantes: {', '.join(missing_routes)}")
+
+        print("\n🎯 PASOS SIGUIENTES:")
+        print("1. Ejecuta: python app.py")
+        print("2. Accede a: http://127.0.0.1:5000/login")
+        print("3. Login: admin / admin123")
+        print("4. Si aún falla, ve a: http://127.0.0.1:5000/debug")
+
+        show_logs_instructions()
+
+    except Exception as e:
+        print(f"\n❌ ERROR: {e}")
+
+
+if __name__ == "__main__":
+    main()

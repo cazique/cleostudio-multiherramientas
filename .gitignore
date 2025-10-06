@@ -19,3 +19,5 @@ instance/
 *.log
 uploads/
 static/uploads/
+backup_*/
+multitools.db

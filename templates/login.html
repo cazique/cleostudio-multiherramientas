@@ -8,30 +8,40 @@
             <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Iniciar Sesión</h1>
             <p class="text-gray-600 dark:text-gray-400">Accede a tus herramientas</p>
         </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                <div class="mb-4 p-4 rounded-lg {{ 'bg-red-100 text-red-800' if category == 'danger' else 'bg-green-100 text-green-800' }}">
+                    {{ message }}
+                </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
         <form method="POST">
-            {{ form.hidden_tag() }}
             <div class="mb-4">
                 <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Usuario</label>
-                {{ form.username(class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white") }}
-                {% if form.username.errors %}
-                    <div class="text-red-500 text-sm mt-1">{{ form.username.errors[0] }}</div>
-                {% endif %}
+                <input type="text" name="username" required class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
             </div>
             <div class="mb-4">
                 <label class="block text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">Contraseña</label>
-                {{ form.password(class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white") }}
-                {% if form.password.errors %}
-                    <div class="text-red-500 text-sm mt-1">{{ form.password.errors[0] }}</div>
-                {% endif %}
+                <input type="password" name="password" required class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white">
             </div>
             <div class="mb-6 flex items-center">
-                {{ form.remember_me(class="mr-2") }}
+                <input type="checkbox" name="remember" class="mr-2">
                 <label class="text-sm text-gray-700 dark:text-gray-300">Recordarme</label>
             </div>
-            <button type="submit" class="w-full bg-primary hover:bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold transition">Iniciar Sesión</button>
+            <button type="submit" class="w-full bg-primary hover:bg-blue-600 text-white py-3 px-6 rounded-lg font-semibold transition">
+                Iniciar Sesión
+            </button>
         </form>
+
         <div class="text-center mt-6">
-            <p class="text-gray-600 dark:text-gray-400">¿No tienes cuenta? <a href="{{ url_for(\047register\047) }}" class="text-primary hover:underline">Regístrate</a></p>
+            <p class="text-gray-600 dark:text-gray-400">
+                ¿No tienes cuenta? 
+                <a href="{{ url_for('register') }}" class="text-primary hover:underline">Regístrate</a>
+            </p>
         </div>
     </div>
 </div>
