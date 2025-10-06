@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container" style="max-width: 900px; margin: 50px auto;">
+        <div class="card-tool">
+            <div class="text-center mb-4">
+                <h1 class="tool-header-gradient">📡 Port Scanner</h1>
+                <p class="text-secondary">Escanea los puertos abiertos más comunes en un servidor o dirección IP.</p>
+            </div>
+
+            <div class="lookup-section" style="border-top: none; padding-top: 0;">
+                <div class="input-group">
+                    <input type="text" id="hostnameInput" class="form-control" placeholder="Ej: google.com o 8.8.8.8"
+                           onkeypress="if(event.key==='Enter') scanPorts()">
+                    <button onclick="scanPorts()" class="btn btn-gradient">Escanear</button>
+                </div>
+            </div>
+
+            <div id="loader" class="text-center p-4" style="display: none;">
+                <div class="spinner-border text-primary"></div>
+                <p class="mt-2">Escaneando puertos...</p></div>
+            <div id="results" class="mt-4" style="display: none;"></div>
+            <div id="error" class="alert alert-danger mt-4" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        async function scanPorts() {
+            const hostname = document.getElementById('hostnameInput').value.trim();
+            const loader = document.getElementById('loader');
+            const resultsDiv = document.getElementById('results');
+            const errorDiv = document.getElementById('error');
+
+            if (!hostname) {
+                showError('Por favor, ingresa un nombre de host o IP.');
+                return;
+            }
+
+            loader.style.display = 'block';
+            resultsDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+
+            try {
+                const formData = new FormData();
+                formData.append('hostname', hostname);
+                const res = await fetch('/api/port-scan', {method: 'POST', body: formData});
+                const data = await res.json();
+                data.success ? showResults(data.data) : showError(data.error);
+            } catch (err) {
+                showError('Error de red. Inténtalo de nuevo.');
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        function showResults(data) {
+            let summaryClass = data.open_ports > 0 ? 'alert-warning' : 'alert-info';
+            let summaryText = `Escaneo completado para <strong>${data.hostname}</strong> (<code>${data.ip}</code>). Se encontraron <strong>${data.open_ports}</strong> puertos abiertos.`;
+
+            let tableHtml = `<table class="table table-hover">
+        <thead>
+            <tr><th>Puerto</th><th>Servicio</th><th>Estado</th></tr>
+        </thead>
+        <tbody>`;
+
+            data.results.forEach(res => {
+                let statusBadge = res.status === 'Abierto' ?
+                    '<span class="badge bg-success">Abierto</span>' :
+                    '<span class="badge bg-secondary">Cerrado</span>';
+                tableHtml += `<tr>
+            <td>${res.port}</td>
+            <td>${res.service}</td>
+            <td>${statusBadge}</td>
+        </tr>`;
+            });
+            tableHtml += `</tbody></table>`;
+
+            document.getElementById('results').innerHTML = `
+        <div class="alert ${summaryClass}">
+            <p class="mb-0">${summaryText}</p>
+        </div>
+        <div class="table-responsive">
+            ${tableHtml}
+        </div>`;
+            document.getElementById('results').style.display = 'block';
+        }
+
+        function showError(msg) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = msg;
+            errorDiv.style.display = 'block';
+        }
+    </script>
+
+    <style>
+        .card-tool {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .tool-header-gradient {
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+        }
+
+        .btn-gradient:hover {
+            opacity: 0.9;
+        }
+
+        .table {
+            color: var(--text-primary);
+        }
+
+        .table-hover tbody tr:hover {
+            background-color: var(--info-bg);
+        }
+    </style>
+{% endblock %}

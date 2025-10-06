@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}Combinar PDFs{% endblock %}
+{% block content %}
+    <div style="background: white; border-radius: 12px; padding: 40px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto;">
+        <h2 style="text-align: center; color: #2c3e50; margin-bottom: 30px;">📚 Combinar PDFs</h2>
+        <div style="border: 3px dashed #667eea; border-radius: 12px; padding: 40px; text-align: center;" id="dropZone">
+            <input type="file" id="fileInput" accept=".pdf" multiple style="display: none">
+            <i class="bi bi-files" style="font-size: 3rem; color: #667eea;"></i>
+            <h4 style="margin: 20px 0 10px;">Selecciona múltiples PDFs</h4>
+            <button class="btn btn-gradient" onclick="document.getElementById('fileInput').click()">Seleccionar PDFs
+            </button>
+        </div>
+        <div id="fileList" style="margin-top: 20px;"></div>
+        <button class="btn btn-gradient w-100 mt-3" id="mergeBtn" disabled onclick="mergePDFs()">Combinar PDFs</button>
+    </div>
+    <script>
+        let files = [];
+        const fileInput = document.getElementById('fileInput');
+        const fileList = document.getElementById('fileList');
+        const mergeBtn = document.getElementById('mergeBtn');
+
+        fileInput.onchange = (e) => {
+            files = Array.from(e.target.files);
+            fileList.innerHTML = files.map((f, i) => `<div style="padding: 10px; background: #f0f0f0; margin: 5px 0; border-radius: 5px;">${i + 1}. ${f.name}</div>`).join('');
+            mergeBtn.disabled = files.length < 2;
+        };
+
+        async function mergePDFs() {
+            if (files.length < 2) return alert('Necesitas al menos 2 PDFs');
+            mergeBtn.disabled = true;
+            mergeBtn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Combinando...';
+            const formData = new FormData();
+            files.forEach(f => formData.append('files[]', f));
+            try {
+                const res = await fetch('/api/merge-pdfs', {method: 'POST', body: formData});
+                if (res.ok) {
+                    const blob = await res.blob();
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'combinado.pdf';
+                    a.click();
+                    URL.revokeObjectURL(url);
+                } else alert('Error');
+            } catch (e) {
+                alert('Error: ' + e);
+            } finally {
+                mergeBtn.disabled = false;
+                mergeBtn.innerHTML = 'Combinar PDFs';
+            }
+        }
+    </script>
+{% endblock %}

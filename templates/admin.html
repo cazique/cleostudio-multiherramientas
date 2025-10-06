@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block title %}Panel de Administración{% endblock %}
+
+{% block extra_styles %}
+    .stats-card {
+    background: white;
+    border-radius: 15px;
+    padding: 25px;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    transition: transform 0.3s;
+    }
+
+    .stats-card:hover {
+    transform: translateY(-5px);
+    }
+
+    .stats-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    }
+
+    .stats-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #2c3e50;
+    }
+
+    .stats-label {
+    color: #7f8c8d;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    }
+
+    .bg-gradient {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    }
+{% endblock %}
+
+{% block content %}
+    <h1 class="text-white mb-4"><i class="bi bi-shield-lock"></i> Panel de Administración</h1>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="stats-card">
+                <i class="bi bi-people stats-icon"></i>
+                <div class="stats-number">{{ total_users }}</div>
+                <div class="stats-label">Usuarios Totales</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stats-card">
+                <i class="bi bi-bar-chart stats-icon"></i>
+                <div class="stats-number">{{ total_usage }}</div>
+                <div class="stats-label">Usos de Herramientas</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stats-card">
+                <i class="bi bi-tools stats-icon"></i>
+                <div class="stats-number">{{ tools|length if tools else 1 }}</div>
+                <div class="stats-label">Herramientas Activas</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card card-custom">
+                <div class="card-header bg-gradient text-white">
+                    <h5 class="mb-0"><i class="bi bi-people"></i> Gestión de Usuarios</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                            <tr>
+                                <th>Usuario</th>
+                                <th>Email</th>
+                                <th>Admin</th>
+                                <th>Registro</th>
+                                <th>Acciones</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {% for user in users %}
+                                <tr id="user-{{ user.id }}">
+                                    <td>
+                                        <i class="bi bi-person-circle"></i> {{ user.username }}
+                                        {% if user.id == current_user.id %}
+                                            <span class="badge bg-info">Tú</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ user.email }}</td>
+                                    <td>
+                                    <span class="badge bg-{{ 'success' if user.is_admin else 'secondary' }}">
+                                        {{ 'Sí' if user.is_admin else 'No' }}
+                                    </span>
+                                    </td>
+                                    <td>{{ user.created_at.strftime('%d/%m/%Y') }}</td>
+                                    <td>
+                                        {% if user.id != current_user.id %}
+                                            <button class="btn btn-sm btn-warning" onclick="toggleAdmin({{ user.id }})"
+                                                    title="Cambiar permisos de admin">
+                                                <i class="bi bi-shield"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-danger" onclick="deleteUser({{ user.id }})"
+                                                    title="Eliminar usuario">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card card-custom">
+                <div class="card-header bg-gradient text-white">
+                    <h5 class="mb-0"><i class="bi bi-clock-history"></i> Actividad Reciente</h5>
+                </div>
+                <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                    {% if recent_usage %}
+                        {% for usage in recent_usage %}
+                            <div class="mb-3 pb-3 border-bottom">
+                                <div class="d-flex justify-content-between">
+                                    <strong>{{ usage.user.username }}</strong>
+                                    <small class="text-muted">{{ usage.timestamp.strftime('%H:%M') }}</small>
+                                </div>
+                                <small class="text-muted">{{ usage.tool_name }}</small>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center">No hay actividad reciente</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        async function deleteUser(userId) {
+            if (!confirm('¿Estás seguro de que quieres eliminar este usuario?')) return;
+
+            try {
+                const response = await fetch(`/admin/delete-user/${userId}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    document.getElementById(`user-${userId}`).remove();
+                    alert('Usuario eliminado correctamente');
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error al eliminar usuario');
+            }
+        }
+
+        async function toggleAdmin(userId) {
+            try {
+                const response = await fetch(`/admin/toggle-admin/${userId}`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'}
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            } catch (error) {
+                alert('Error al cambiar permisos');
+            }
+        }
+    </script>
+{% endblock %}

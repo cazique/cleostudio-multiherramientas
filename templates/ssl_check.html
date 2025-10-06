@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container" style="max-width: 900px; margin: 50px auto;">
+        <div class="card-tool">
+            <div class="text-center mb-4">
+                <h1 class="tool-header-gradient">✅ SSL Certificate Check</h1>
+                <p class="text-secondary">Verifica la validez y los detalles del certificado SSL de cualquier
+                    dominio.</p>
+            </div>
+
+            <div class="lookup-section" style="border-top: none; padding-top: 0;">
+                <div class="input-group">
+                    <input type="text" id="hostnameInput" class="form-control" placeholder="Ej: google.com"
+                           onkeypress="if(event.key==='Enter') checkSSL()">
+                    <button onclick="checkSSL()" class="btn btn-gradient">Verificar</button>
+                </div>
+            </div>
+
+            <div id="loader" class="text-center p-4" style="display: none;">
+                <div class="spinner-border text-primary"></div>
+            </div>
+            <div id="results" class="mt-4" style="display: none;"></div>
+            <div id="error" class="alert alert-danger mt-4" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        async function checkSSL() {
+            const hostname = document.getElementById('hostnameInput').value.trim();
+            const loader = document.getElementById('loader');
+            const resultsDiv = document.getElementById('results');
+            const errorDiv = document.getElementById('error');
+
+            if (!hostname) {
+                showError('Por favor, ingresa un nombre de host.');
+                return;
+            }
+
+            loader.style.display = 'block';
+            resultsDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+
+            try {
+                const formData = new FormData();
+                formData.append('hostname', hostname);
+                const res = await fetch('/api/ssl-check', {method: 'POST', body: formData});
+                const data = await res.json();
+                data.success ? showResults(hostname, data.data) : showError(data.error);
+            } catch (err) {
+                showError('Error de red. Inténtalo de nuevo.');
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        function showResults(hostname, data) {
+            const validUntil = new Date(data.valid_until);
+            const now = new Date();
+            const daysLeft = Math.ceil((validUntil - now) / (1000 * 60 * 60 * 24));
+            let expiryStatus = '';
+            if (daysLeft < 0) {
+                expiryStatus = `<span class="badge bg-danger">Expirado hace ${-daysLeft} días</span>`;
+            } else if (daysLeft < 30) {
+                expiryStatus = `<span class="badge bg-warning">Expira en ${daysLeft} días</span>`;
+            } else {
+                expiryStatus = `<span class="badge bg-success">Válido por ${daysLeft} días</span>`;
+            }
+
+            const resultsHtml = `
+        <div class="result-card">
+            <h4><i class="bi bi-patch-check-fill"></i> Certificado para <code>${hostname}</code></h4>
+            <div class="row g-3">
+                <div class="col-md-12"><h5>Información General</h5></div>
+                <div class="col-md-6"><strong>Emitido para (CN):</strong></div>
+                <div class="col-md-6"><code>${data.subject.commonName || '(No especificado)'}</code></div>
+                <div class="col-md-6"><strong>Emitido por:</strong></div>
+                <div class="col-md-6">${data.issuer.commonName || '(No especificado)'}</div>
+                <div class="col-md-6"><strong>Validez:</strong></div>
+                <div class="col-md-6">${expiryStatus}</div>
+                <div class="col-md-6"><strong>Válido desde:</strong></div>
+                <div class="col-md-6">${new Date(data.valid_from).toLocaleString()}</div>
+                <div class="col-md-6"><strong>Válido hasta:</strong></div>
+                <div class="col-md-6">${validUntil.toLocaleString()}</div>
+                
+                <div class="col-md-12 mt-4"><h5>Nombres Alternativos (SANs)</h5></div>
+                <div class="col-md-12">
+                    <div class="sans-box">
+                        ${data.subject_alt_names.map(name => `<span class="badge bg-secondary">${name}</span>`).join(' ') || 'Ninguno'}
+                    </div>
+                </div>
+            </div>
+        </div>`;
+
+            document.getElementById('results').innerHTML = resultsHtml;
+            document.getElementById('results').style.display = 'block';
+        }
+
+        function showError(msg) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = msg;
+            errorDiv.style.display = 'block';
+        }
+    </script>
+
+    <style>
+        .card-tool {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .tool-header_gradient {
+            font-weight: 700;
+        }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+        }
+
+        .btn-gradient:hover {
+            opacity: 0.9;
+        }
+
+        .result-card {
+            background: var(--info-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 25px;
+        }
+
+        .result-card code {
+            color: #d63384;
+        }
+
+        .sans-box {
+            max-height: 150px;
+            overflow-y: auto;
+            background-color: var(--card-bg);
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .sans-box .badge {
+            margin: 2px;
+        }
+
+        .tool-header-gradient {
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+{% endblock %}

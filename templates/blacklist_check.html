@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container" style="max-width: 900px; margin: 50px auto;">
+        <div class="card-tool">
+            <div class="text-center mb-4">
+                <h1 class="tool-header-gradient">🛡️ Blacklist Check</h1>
+                <p class="text-secondary">Verifica si una dirección IP está en las listas negras de spam más
+                    comunes.</p>
+            </div>
+
+            <div class="lookup-section" style="border-top: none; padding-top: 0;">
+                <div class="input-group">
+                    <input type="text" id="ipInput" class="form-control" placeholder="Ej: 8.8.8.8"
+                           onkeypress="if(event.key==='Enter') checkBlacklists()">
+                    <button onclick="checkBlacklists()" class="btn btn-gradient">Verificar</button>
+                </div>
+            </div>
+
+            <div id="loader" class="text-center p-4" style="display: none;">
+                <div class="spinner-border text-primary"></div>
+                <p class="mt-2">Verificando, esto puede tardar unos segundos...</p></div>
+            <div id="results" class="mt-4" style="display: none;"></div>
+            <div id="error" class="alert alert-danger mt-4" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        async function checkBlacklists() {
+            const ip = document.getElementById('ipInput').value.trim();
+            const loader = document.getElementById('loader');
+            const resultsDiv = document.getElementById('results');
+            const errorDiv = document.getElementById('error');
+
+            if (!ip) {
+                showError('Por favor, ingresa una dirección IP.');
+                return;
+            }
+
+            loader.style.display = 'block';
+            resultsDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+
+            try {
+                const formData = new FormData();
+                formData.append('ip', ip);
+                const res = await fetch('/api/blacklist-check', {method: 'POST', body: formData});
+                const data = await res.json();
+                data.success ? showResults(data.data) : showError(data.error);
+            } catch (err) {
+                showError('Error de red. Inténtalo de nuevo.');
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        function showResults(data) {
+            let summaryClass = data.listed_count > 0 ? 'alert-danger' : 'alert-success';
+            let summaryText = data.listed_count > 0 ?
+                `Encontrada en <strong>${data.listed_count} de ${data.total_checked}</strong> listas negras.` :
+                `No se encontró en ninguna de las ${data.total_checked} listas negras verificadas.`;
+
+            let listHtml = '<ul class="list-group">';
+            data.results.forEach(res => {
+                let statusBadge;
+                if (res.listed === true) {
+                    statusBadge = '<span class="badge bg-danger">Encontrada</span>';
+                } else if (res.listed === false) {
+                    statusBadge = '<span class="badge bg-success">Limpia</span>';
+                } else {
+                    statusBadge = '<span class="badge bg-warning">Error</span>';
+                }
+                listHtml += `<li class="list-group-item d-flex justify-content-between align-items-center">
+            <code>${res.server}</code>
+            ${statusBadge}
+        </li>`;
+            });
+            listHtml += '</ul>';
+
+            document.getElementById('results').innerHTML = `
+        <div class="alert ${summaryClass}">
+            <h5 class="alert-heading"><i class="bi bi-shield-check"></i> Resultados para <code>${data.ip}</code></h5>
+            <p>${summaryText}</p>
+        </div>
+        ${listHtml}`;
+            document.getElementById('results').style.display = 'block';
+        }
+
+        function showError(msg) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = msg;
+            errorDiv.style.display = 'block';
+        }
+    </script>
+
+    <style>
+        .card-tool {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .tool-header-gradient {
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+        }
+
+        .btn-gradient:hover {
+            opacity: 0.9;
+        }
+
+        .list-group-item {
+            background-color: var(--info-bg);
+            border-color: var(--border);
+        }
+    </style>
+{% endblock %}

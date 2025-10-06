@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="container" style="max-width: 900px; margin: 50px auto;">
+        <div class="card-tool">
+            <div class="text-center mb-4">
+                <h1 class="tool-header-gradient">📜 IP WHOIS</h1>
+                <p class="text-secondary">Consulta los registros WHOIS de una dirección IP para obtener información de
+                    registro.</p>
+            </div>
+
+            <div class="lookup-section" style="border-top: none; padding-top: 0;">
+                <div class="input-group">
+                    <input type="text" id="ipInput" class="form-control" placeholder="Ej: 8.8.8.8"
+                           onkeypress="if(event.key==='Enter') lookupWhois()">
+                    <button onclick="lookupWhois()" class="btn btn-gradient">Consultar</button>
+                </div>
+            </div>
+
+            <div id="loader" class="text-center p-4" style="display: none;">
+                <div class="spinner-border text-primary"></div>
+            </div>
+            <div id="results" class="mt-4" style="display: none;"></div>
+            <div id="error" class="alert alert-danger mt-4" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        async function lookupWhois() {
+            const ip = document.getElementById('ipInput').value.trim();
+            const loader = document.getElementById('loader');
+            const resultsDiv = document.getElementById('results');
+            const errorDiv = document.getElementById('error');
+
+            if (!ip) {
+                showError('Por favor, ingresa una dirección IP.');
+                return;
+            }
+
+            loader.style.display = 'block';
+            resultsDiv.style.display = 'none';
+            errorDiv.style.display = 'none';
+
+            try {
+                const formData = new FormData();
+                formData.append('ip', ip);
+                const res = await fetch('/api/ip-whois', {method: 'POST', body: formData});
+                const data = await res.json();
+                data.success ? showResults(ip, data.data) : showError(data.error);
+            } catch (err) {
+                showError('Error de red. Inténtalo de nuevo.');
+            } finally {
+                loader.style.display = 'none';
+            }
+        }
+
+        function showResults(ip, data) {
+            let tableHtml = `<table class="table table-sm table-borderless">`;
+            for (const key in data) {
+                let value = data[key];
+                if (Array.isArray(value)) {
+                    value = value.join('<br>');
+                }
+                if (value instanceof Date) {
+                    value = value.toLocaleString();
+                }
+                tableHtml += `<tr><td style="width:150px;"><strong>${formatKey(key)}:</strong></td><td>${value}</td></tr>`;
+            }
+            tableHtml += `</table>`;
+
+            document.getElementById('results').innerHTML = `
+        <div class="result-card">
+            <h4><i class="bi bi-journal-text"></i> WHOIS para <code>${ip}</code></h4>
+            ${tableHtml}
+        </div>`;
+            document.getElementById('results').style.display = 'block';
+        }
+
+        function showError(msg) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = msg;
+            errorDiv.style.display = 'block';
+        }
+
+        function formatKey(key) {
+            return key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+    </script>
+
+    <style>
+        .card-tool {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .tool-header-gradient {
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .result-card {
+            background: var(--info-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 25px;
+        }
+
+        .result-card code {
+            color: #d63384;
+        }
+
+        .btn-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+        }
+
+        .btn-gradient:hover {
+            opacity: 0.9;
+        }
+
+        .table {
+            color: var(--text-primary);
+        }
+    </style>
+{% endblock %}

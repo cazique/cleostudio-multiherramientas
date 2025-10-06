@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block content %}
+    <div class="container" style="max-width:900px;margin:50px auto;">
+        <div style="background:var(--card-bg);border-radius:16px;padding:32px;box-shadow:0 4px 20px rgba(0,0,0,.08)">
+            <div style="text-align:center;margin-bottom:20px">
+                <h1 style="font-weight:800;margin:0;background:linear-gradient(135deg,#667eea,#764ba2);-webkit-background-clip:text;-webkit-text-fill-color:transparent">
+                    🔑 DKIM Check</h1>
+                <p style="color:var(--text-secondary)">Herramienta de diagnóstico</p>
+            </div>
+
+            <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+                <input id="domainInput" placeholder="ejemplo.com"
+                       style="flex:1;min-width:260px;padding:12px 14px;border:2px solid var(--border);border-radius:10px;background:var(--input-bg);color:var(--text)">
+                <input id="selectorInput" placeholder="selector (default)" value="default"
+                       style="width:220px;padding:12px 14px;border:2px solid var(--border);border-radius:10px;background:var(--input-bg);color:var(--text)">
+                <button onclick="checkDKIM()" class="btn btn-primary" style="padding:12px 22px;font-weight:600">
+                    Consultar
+                </button>
+            </div>
+
+            <div id="loader" style="display:none;text-align:center;padding:24px">
+                <div class="spinner-border" style="width:2.5rem;height:2.5rem"></div>
+                <p style="margin-top:10px;color:var(--text-secondary)">Procesando…</p>
+            </div>
+            <div id="error"
+                 style="display:none;margin-top:16px;background:#f8d7da;border:1px solid #dc3545;border-radius:10px;padding:16px">
+                <strong style="color:#721c24">Error:</strong> <span id="errorMsg"></span>
+            </div>
+            <div id="results"
+                 style="display:none;margin-top:16px;background:#d4edda;border:1px solid #28a745;border-radius:10px;padding:16px">
+                <h5 style="color:#155724;margin-bottom:12px">Resultados</h5>
+                <div id="resultsContent"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+
+        async function checkDKIM() {
+            const domain = document.getElementById('domainInput').value.trim();
+            const selector = document.getElementById('selectorInput').value.trim() || 'default';
+            if (!domain) {
+                return showError('Ingresa un dominio');
+            }
+            toggle('loader', true);
+            toggle('error', false);
+            toggle('results', false);
+            try {
+                const fd = new FormData();
+                fd.append('domain', domain);
+                fd.append('selector', selector);
+                const r = await fetch('/api/dkim-check', {method: 'POST', body: fd});
+                const d = await r.json();
+                if (d.success) {
+                    const qname = `${d.selector}._domainkey.${d.domain}`;
+                    let h = `<div><strong>Consulta:</strong> <code>${qname}</code> · <strong>TXT:</strong> ${d.total}</div><ul>`;
+                    d.records.forEach(x => h += `<li><code>${x}</code></li>`);
+                    h += '</ul>';
+                    document.getElementById('resultsContent').innerHTML = h;
+                    toggle('results', true);
+                } else showError(d.error || 'Fallo');
+            } catch (e) {
+                showError('Error de conexión');
+            } finally {
+                toggle('loader', false);
+            }
+        }
+
+        function showError(m) {
+            document.getElementById('errorMsg').textContent = m;
+            toggle('error', true);
+        }
+
+        function toggle(id, on) {
+            document.getElementById(id).style.display = on ? 'block' : 'none';
+        }
+    </script>
+{% endblock %}
