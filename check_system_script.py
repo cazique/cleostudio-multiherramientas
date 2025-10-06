@@ -18,7 +18,9 @@ def print_header(text):
 def check_python_version():
     print_header("🐍 Versión de Python")
     version = sys.version
-    print(f"Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")
+    print(
+        f"Python {sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+    )
     print(f"Ejecutable: {sys.executable}")
 
     if sys.version_info < (3, 8):
@@ -31,16 +33,16 @@ def check_packages():
     print_header("📦 Paquetes Instalados")
 
     required_packages = [
-        'flask',
-        'flask_sqlalchemy',
-        'flask_login',
-        'flask_wtf',
-        'wtforms',
-        'markdown',
-        'weasyprint',
-        'pygments',
-        'werkzeug',
-        'email_validator'
+        "flask",
+        "flask_sqlalchemy",
+        "flask_login",
+        "flask_wtf",
+        "wtforms",
+        "markdown",
+        "weasyprint",
+        "pygments",
+        "werkzeug",
+        "email_validator",
     ]
 
     all_ok = True
@@ -48,7 +50,7 @@ def check_packages():
     for package in required_packages:
         try:
             mod = __import__(package)
-            version = getattr(mod, '__version__', 'unknown')
+            version = getattr(mod, "__version__", "unknown")
             print(f"✅ {package:20s} {version}")
         except ImportError:
             print(f"❌ {package:20s} NO INSTALADO")
@@ -63,7 +65,7 @@ def check_packages():
 def check_database():
     print_header("💾 Base de Datos")
 
-    db_path = 'multitools.db'
+    db_path = "multitools.db"
 
     if os.path.exists(db_path):
         size = os.path.getsize(db_path)
@@ -79,7 +81,7 @@ def check_database():
                 user_count = User.query.count()
                 print(f"   Usuarios registrados: {user_count}")
 
-                admin = User.query.filter_by(username='admin').first()
+                admin = User.query.filter_by(username="admin").first()
                 if admin:
                     print(f"   ✅ Usuario admin existe")
                 else:
@@ -97,17 +99,17 @@ def check_files():
     print_header("📁 Archivos del Proyecto")
 
     required_files = [
-        'app.py',
-        'config.py',
-        'models.py',
-        'forms.py',
-        'requirements.txt',
-        'templates/base.html',
-        'templates/login.html',
-        'templates/register.html',
-        'templates/index.html',
-        'templates/md_to_pdf.html',
-        'templates/admin.html'
+        "app.py",
+        "config.py",
+        "models.py",
+        "forms.py",
+        "requirements.txt",
+        "templates/base.html",
+        "templates/login.html",
+        "templates/register.html",
+        "templates/index.html",
+        "templates/md_to_pdf.html",
+        "templates/admin.html",
     ]
 
     all_ok = True
@@ -130,9 +132,9 @@ def check_pip_outdated():
 
     try:
         result = subprocess.run(
-            [sys.executable, '-m', 'pip', 'list', '--outdated'],
+            [sys.executable, "-m", "pip", "list", "--outdated"],
             capture_output=True,
-            text=True
+            text=True,
         )
 
         if result.stdout.strip():
@@ -149,8 +151,9 @@ def check_port():
     print_header("🌐 Puerto 5000")
 
     import socket
+
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    result = sock.connect_ex(('127.0.0.1', 5000))
+    result = sock.connect_ex(("127.0.0.1", 5000))
     sock.close()
 
     if result == 0:
@@ -163,7 +166,8 @@ def check_port():
 def show_commands():
     print_header("🚀 Comandos Útiles")
 
-    print("""
+    print(
+        """
 1. Inicializar/Resetear base de datos:
    python init_db.py
 
@@ -184,7 +188,8 @@ def show_commands():
 
 7. Ver paquetes desactualizados:
    pip list --outdated
-    """)
+    """
+    )
 
 
 def main():
@@ -203,5 +208,5 @@ def main():
     print("=" * 60 + "\n")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

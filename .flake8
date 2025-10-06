@@ -1,0 +1,10 @@
+[flake8]
+ignore = E501, W503
+exclude =
+    .git,
+    __pycache__,
+    flask_project_backup*,
+    app_backup_before_merge.py,
+    check_system_script.py,
+    init_db.py
+max-line-length = 120
