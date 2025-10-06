@@ -1,158 +1,43 @@
 {% extends "base.html" %}
-
+{% block title %}SSL Check{% endblock %}
 {% block content %}
-    <div class="container" style="max-width: 900px; margin: 50px auto;">
-        <div class="card-tool">
-            <div class="text-center mb-4">
-                <h1 class="tool-header-gradient">✅ SSL Certificate Check</h1>
-                <p class="text-secondary">Verifica la validez y los detalles del certificado SSL de cualquier
-                    dominio.</p>
-            </div>
-
-            <div class="lookup-section" style="border-top: none; padding-top: 0;">
-                <div class="input-group">
-                    <input type="text" id="hostnameInput" class="form-control" placeholder="Ej: google.com"
-                           onkeypress="if(event.key==='Enter') checkSSL()">
-                    <button onclick="checkSSL()" class="btn btn-gradient">Verificar</button>
-                </div>
-            </div>
-
-            <div id="loader" class="text-center p-4" style="display: none;">
-                <div class="spinner-border text-primary"></div>
-            </div>
-            <div id="results" class="mt-4" style="display: none;"></div>
-            <div id="error" class="alert alert-danger mt-4" style="display: none;"></div>
-        </div>
+<div class="card-tool">
+    <div class="tool-header">
+        <h1 class="tool-title">✅ SSL Check</h1>
+        <p class="tool-description">Verifica el certificado SSL de un dominio</p>
     </div>
-
-    <script>
-        async function checkSSL() {
-            const hostname = document.getElementById('hostnameInput').value.trim();
-            const loader = document.getElementById('loader');
-            const resultsDiv = document.getElementById('results');
-            const errorDiv = document.getElementById('error');
-
-            if (!hostname) {
-                showError('Por favor, ingresa un nombre de host.');
-                return;
-            }
-
-            loader.style.display = 'block';
-            resultsDiv.style.display = 'none';
-            errorDiv.style.display = 'none';
-
-            try {
-                const formData = new FormData();
-                formData.append('hostname', hostname);
-                const res = await fetch('/api/ssl-check', {method: 'POST', body: formData});
-                const data = await res.json();
-                data.success ? showResults(hostname, data.data) : showError(data.error);
-            } catch (err) {
-                showError('Error de red. Inténtalo de nuevo.');
-            } finally {
-                loader.style.display = 'none';
-            }
-        }
-
-        function showResults(hostname, data) {
-            const validUntil = new Date(data.valid_until);
+    <div class="input-group-modern">
+        <input type="text" id="hostnameInput" placeholder="Ejemplo: google.com" onkeypress="if(event.key==='Enter') check()">
+        <button onclick="check()" class="btn-gradient"><i class="bi bi-search"></i> Verificar</button>
+    </div>
+    <div id="loader" class="loader-container"><div class="spinner"></div><p style="color: var(--text-secondary);">Verificando SSL...</p></div>
+    <div id="error" class="alert-modern alert-error"></div>
+    <div id="results" class="alert-modern alert-success"></div>
+</div>
+<script>
+async function check() {
+    const host = document.getElementById('hostnameInput').value.trim();
+    const loader = document.getElementById('loader');
+    const errorDiv = document.getElementById('error');
+    const resultsDiv = document.getElementById('results');
+    if (!host) { errorDiv.innerHTML = '<strong><i class="bi bi-exclamation-triangle"></i> Error:</strong> Ingresa un dominio'; errorDiv.classList.add('active'); return; }
+    loader.classList.add('active'); errorDiv.classList.remove('active'); resultsDiv.classList.remove('active');
+    try {
+        const fd = new FormData(); fd.append('hostname', host);
+        const r = await fetch('/api/ssl-check', {method: 'POST', body: fd});
+        const d = await r.json();
+        if (d.success) {
+            const validUntil = new Date(d.data.valid_until);
             const now = new Date();
-            const daysLeft = Math.ceil((validUntil - now) / (1000 * 60 * 60 * 24));
-            let expiryStatus = '';
-            if (daysLeft < 0) {
-                expiryStatus = `<span class="badge bg-danger">Expirado hace ${-daysLeft} días</span>`;
-            } else if (daysLeft < 30) {
-                expiryStatus = `<span class="badge bg-warning">Expira en ${daysLeft} días</span>`;
-            } else {
-                expiryStatus = `<span class="badge bg-success">Válido por ${daysLeft} días</span>`;
-            }
-
-            const resultsHtml = `
-        <div class="result-card">
-            <h4><i class="bi bi-patch-check-fill"></i> Certificado para <code>${hostname}</code></h4>
-            <div class="row g-3">
-                <div class="col-md-12"><h5>Información General</h5></div>
-                <div class="col-md-6"><strong>Emitido para (CN):</strong></div>
-                <div class="col-md-6"><code>${data.subject.commonName || '(No especificado)'}</code></div>
-                <div class="col-md-6"><strong>Emitido por:</strong></div>
-                <div class="col-md-6">${data.issuer.commonName || '(No especificado)'}</div>
-                <div class="col-md-6"><strong>Validez:</strong></div>
-                <div class="col-md-6">${expiryStatus}</div>
-                <div class="col-md-6"><strong>Válido desde:</strong></div>
-                <div class="col-md-6">${new Date(data.valid_from).toLocaleString()}</div>
-                <div class="col-md-6"><strong>Válido hasta:</strong></div>
-                <div class="col-md-6">${validUntil.toLocaleString()}</div>
-                
-                <div class="col-md-12 mt-4"><h5>Nombres Alternativos (SANs)</h5></div>
-                <div class="col-md-12">
-                    <div class="sans-box">
-                        ${data.subject_alt_names.map(name => `<span class="badge bg-secondary">${name}</span>`).join(' ') || 'Ninguno'}
-                    </div>
-                </div>
-            </div>
-        </div>`;
-
-            document.getElementById('results').innerHTML = resultsHtml;
-            document.getElementById('results').style.display = 'block';
-        }
-
-        function showError(msg) {
-            const errorDiv = document.getElementById('error');
-            errorDiv.textContent = msg;
-            errorDiv.style.display = 'block';
-        }
-    </script>
-
-    <style>
-        .card-tool {
-            background: var(--card-bg);
-            border-radius: 16px;
-            padding: 40px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        }
-
-        .tool-header_gradient {
-            font-weight: 700;
-        }
-
-        .btn-gradient {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            color: white;
-        }
-
-        .btn-gradient:hover {
-            opacity: 0.9;
-        }
-
-        .result-card {
-            background: var(--info-bg);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 25px;
-        }
-
-        .result-card code {
-            color: #d63384;
-        }
-
-        .sans-box {
-            max-height: 150px;
-            overflow-y: auto;
-            background-color: var(--card-bg);
-            padding: 10px;
-            border-radius: 8px;
-        }
-
-        .sans-box .badge {
-            margin: 2px;
-        }
-
-        .tool-header-gradient {
-            font-weight: 700;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-    </style>
+            const days = Math.ceil((validUntil - now) / (1000*60*60*24));
+            let badge = days < 0 ? '<span class="badge-modern badge-danger">Expirado hace ' + (-days) + ' días</span>' : days < 30 ? '<span class="badge-modern badge-warning">Expira en ' + days + ' días</span>' : '<span class="badge-modern badge-success">Válido ' + days + ' días más</span>';
+            let h = '<h4><i class="bi bi-shield-check"></i> SSL de <code>' + host + '</code></h4><table class="results-table"><tbody><tr><td><strong>Emitido para</strong></td><td><code>' + (d.data.subject.commonName || 'N/A') + '</code></td></tr><tr><td><strong>Emitido por</strong></td><td>' + (d.data.issuer.commonName || 'N/A') + '</td></tr><tr><td><strong>Estado</strong></td><td>' + badge + '</td></tr><tr><td><strong>Válido desde</strong></td><td>' + new Date(d.data.valid_from).toLocaleString('es-ES') + '</td></tr><tr><td><strong>Válido hasta</strong></td><td>' + validUntil.toLocaleString('es-ES') + '</td></tr></tbody></table><h5 style="margin-top:25px"><i class="bi bi-list-ul"></i> SANs</h5><div style="display:flex;flex-wrap:wrap;gap:8px">';
+            d.data.subject_alt_names.forEach(n => h += '<span class="badge-modern badge-info">' + n + '</span>');
+            h += '</div>';
+            resultsDiv.innerHTML = h; resultsDiv.classList.add('active');
+        } else { errorDiv.innerHTML = '<strong><i class="bi bi-exclamation-triangle"></i> Error:</strong> ' + d.error; errorDiv.classList.add('active'); }
+    } catch (e) { errorDiv.innerHTML = '<strong><i class="bi bi-exclamation-triangle"></i> Error:</strong> Conexión fallida'; errorDiv.classList.add('active'); }
+    finally { loader.classList.remove('active'); }
+}
+</script>
 {% endblock %}

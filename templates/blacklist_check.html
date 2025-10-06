@@ -1,126 +1,45 @@
 {% extends "base.html" %}
-
+{% block title %}Blacklist Check{% endblock %}
 {% block content %}
-    <div class="container" style="max-width: 900px; margin: 50px auto;">
-        <div class="card-tool">
-            <div class="text-center mb-4">
-                <h1 class="tool-header-gradient">🛡️ Blacklist Check</h1>
-                <p class="text-secondary">Verifica si una dirección IP está en las listas negras de spam más
-                    comunes.</p>
-            </div>
-
-            <div class="lookup-section" style="border-top: none; padding-top: 0;">
-                <div class="input-group">
-                    <input type="text" id="ipInput" class="form-control" placeholder="Ej: 8.8.8.8"
-                           onkeypress="if(event.key==='Enter') checkBlacklists()">
-                    <button onclick="checkBlacklists()" class="btn btn-gradient">Verificar</button>
-                </div>
-            </div>
-
-            <div id="loader" class="text-center p-4" style="display: none;">
-                <div class="spinner-border text-primary"></div>
-                <p class="mt-2">Verificando, esto puede tardar unos segundos...</p></div>
-            <div id="results" class="mt-4" style="display: none;"></div>
-            <div id="error" class="alert alert-danger mt-4" style="display: none;"></div>
-        </div>
+<div class="card-tool">
+    <div class="tool-header">
+        <h1 class="tool-title">🛡️ Blacklist Check</h1>
+        <p class="tool-description">Verifica si una IP está en listas negras de spam</p>
     </div>
-
-    <script>
-        async function checkBlacklists() {
-            const ip = document.getElementById('ipInput').value.trim();
-            const loader = document.getElementById('loader');
-            const resultsDiv = document.getElementById('results');
-            const errorDiv = document.getElementById('error');
-
-            if (!ip) {
-                showError('Por favor, ingresa una dirección IP.');
-                return;
-            }
-
-            loader.style.display = 'block';
-            resultsDiv.style.display = 'none';
-            errorDiv.style.display = 'none';
-
-            try {
-                const formData = new FormData();
-                formData.append('ip', ip);
-                const res = await fetch('/api/blacklist-check', {method: 'POST', body: formData});
-                const data = await res.json();
-                data.success ? showResults(data.data) : showError(data.error);
-            } catch (err) {
-                showError('Error de red. Inténtalo de nuevo.');
-            } finally {
-                loader.style.display = 'none';
-            }
-        }
-
-        function showResults(data) {
-            let summaryClass = data.listed_count > 0 ? 'alert-danger' : 'alert-success';
-            let summaryText = data.listed_count > 0 ?
-                `Encontrada en <strong>${data.listed_count} de ${data.total_checked}</strong> listas negras.` :
-                `No se encontró en ninguna de las ${data.total_checked} listas negras verificadas.`;
-
-            let listHtml = '<ul class="list-group">';
-            data.results.forEach(res => {
-                let statusBadge;
-                if (res.listed === true) {
-                    statusBadge = '<span class="badge bg-danger">Encontrada</span>';
-                } else if (res.listed === false) {
-                    statusBadge = '<span class="badge bg-success">Limpia</span>';
-                } else {
-                    statusBadge = '<span class="badge bg-warning">Error</span>';
-                }
-                listHtml += `<li class="list-group-item d-flex justify-content-between align-items-center">
-            <code>${res.server}</code>
-            ${statusBadge}
-        </li>`;
+    <div class="input-group-modern">
+        <input type="text" id="ipInput" placeholder="Ejemplo: 8.8.8.8" onkeypress="if(event.key==='Enter') check()">
+        <button onclick="check()" class="btn-gradient"><i class="bi bi-shield-check"></i> Verificar</button>
+    </div>
+    <div id="loader" class="loader-container"><div class="spinner"></div><p style="color: var(--text-secondary);">Verificando...</p></div>
+    <div id="error" class="alert-modern alert-error"></div>
+    <div id="results" class="alert-modern alert-info"></div>
+</div>
+<script>
+async function check() {
+    const ip = document.getElementById('ipInput').value.trim();
+    const loader = document.getElementById('loader');
+    const errorDiv = document.getElementById('error');
+    const resultsDiv = document.getElementById('results');
+    if (!ip) { errorDiv.innerHTML = '<strong><i class="bi bi-exclamation-triangle"></i> Error:</strong> Ingresa una IP'; errorDiv.classList.add('active'); return; }
+    loader.classList.add('active'); errorDiv.classList.remove('active'); resultsDiv.classList.remove('active');
+    try {
+        const fd = new FormData(); fd.append('ip', ip);
+        const r = await fetch('/api/blacklist-check', {method: 'POST', body: fd});
+        const d = await r.json();
+        if (d.success) {
+            const status = d.data.listed_count > 0 ? 'alert-error' : 'alert-success';
+            const icon = d.data.listed_count > 0 ? 'exclamation-triangle' : 'check-circle';
+            const text = d.data.listed_count > 0 ? 'Encontrada en <strong>' + d.data.listed_count + '</strong> de ' + d.data.total_checked + ' listas' : 'No encontrada en ninguna de ' + d.data.total_checked + ' listas';
+            let h = '<div style="padding:20px;margin-bottom:20px" class="' + status.replace('alert-','badge-') + '"><h4><i class="bi bi-' + icon + '"></i> IP: <code>' + d.data.ip + '</code></h4><p>' + text + '</p></div><table class="results-table"><thead><tr><th>Servidor</th><th>Estado</th></tr></thead><tbody>';
+            d.data.results.forEach(x => {
+                let badge = x.listed === true ? '<span class="badge-modern badge-danger">Encontrada</span>' : x.listed === false ? '<span class="badge-modern badge-success">Limpia</span>' : '<span class="badge-modern badge-secondary">Error</span>';
+                h += '<tr><td><code>' + x.server + '</code></td><td>' + badge + '</td></tr>';
             });
-            listHtml += '</ul>';
-
-            document.getElementById('results').innerHTML = `
-        <div class="alert ${summaryClass}">
-            <h5 class="alert-heading"><i class="bi bi-shield-check"></i> Resultados para <code>${data.ip}</code></h5>
-            <p>${summaryText}</p>
-        </div>
-        ${listHtml}`;
-            document.getElementById('results').style.display = 'block';
-        }
-
-        function showError(msg) {
-            const errorDiv = document.getElementById('error');
-            errorDiv.textContent = msg;
-            errorDiv.style.display = 'block';
-        }
-    </script>
-
-    <style>
-        .card-tool {
-            background: var(--card-bg);
-            border-radius: 16px;
-            padding: 40px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        }
-
-        .tool-header-gradient {
-            font-weight: 700;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .btn-gradient {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            color: white;
-        }
-
-        .btn-gradient:hover {
-            opacity: 0.9;
-        }
-
-        .list-group-item {
-            background-color: var(--info-bg);
-            border-color: var(--border);
-        }
-    </style>
+            h += '</tbody></table>';
+            resultsDiv.innerHTML = h; resultsDiv.classList.remove('alert-info'); resultsDiv.classList.add(status); resultsDiv.classList.add('active');
+        } else { errorDiv.innerHTML = '<strong><i class="bi bi-exclamation-triangle"></i> Error:</strong> ' + d.error; errorDiv.classList.add('active'); }
+    } catch (e) { errorDiv.innerHTML = '<strong><i class="bi bi-exclamation-triangle"></i> Error:</strong> Conexión fallida'; errorDiv.classList.add('active'); }
+    finally { loader.classList.remove('active'); }
+}
+</script>
 {% endblock %}

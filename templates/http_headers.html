@@ -1,153 +1,46 @@
 {% extends "base.html" %}
-
+{% block title %}HTTP Headers{% endblock %}
 {% block content %}
-    <div class="container" style="max-width: 900px; margin: 50px auto;">
-        <div class="card-tool">
-            <div class="text-center mb-4">
-                <h1 class="tool-header-gradient">📑 HTTP Headers</h1>
-                <p class="text-secondary">Analiza las cabeceras de respuesta HTTP de cualquier URL.</p>
-            </div>
-
-            <div class="lookup-section" style="border-top: none; padding-top: 0;">
-                <div class="input-group">
-                    <input type="text" id="urlInput" class="form-control" placeholder="Ej: https://google.com"
-                           onkeypress="if(event.key==='Enter') getHeaders()">
-                    <button onclick="getHeaders()" class="btn btn-gradient">Analizar</button>
-                </div>
-            </div>
-
-            <div id="loader" class="text-center p-4" style="display: none;">
-                <div class="spinner-border text-primary"></div>
-            </div>
-            <div id="results" class="mt-4" style="display: none;"></div>
-            <div id="error" class="alert alert-danger mt-4" style="display: none;"></div>
-        </div>
+<div class="card-tool">
+    <div class="tool-header">
+        <h1 class="tool-title">📑 HTTP Headers</h1>
+        <p class="tool-description">Analiza las cabeceras HTTP de una URL</p>
     </div>
-
-    <script>
-        async function getHeaders() {
-            const url = document.getElementById('urlInput').value.trim();
-            const loader = document.getElementById('loader');
-            const resultsDiv = document.getElementById('results');
-            const errorDiv = document.getElementById('error');
-
-            if (!url) {
-                showError('Por favor, ingresa una URL.');
-                return;
+    <div class="input-group-modern">
+        <input type="text" id="urlInput" placeholder="Ejemplo: https://google.com" onkeypress="if(event.key==='Enter') get()">
+        <button onclick="get()" class="btn-gradient"><i class="bi bi-search"></i> Analizar</button>
+    </div>
+    <div id="loader" class="loader-container"><div class="spinner"></div><p style="color: var(--text-secondary);">Analizando...</p></div>
+    <div id="error" class="alert-modern alert-error"></div>
+    <div id="results" class="alert-modern alert-info"></div>
+</div>
+<script>
+async function get() {
+    const url = document.getElementById('urlInput').value.trim();
+    const loader = document.getElementById('loader');
+    const errorDiv = document.getElementById('error');
+    const resultsDiv = document.getElementById('results');
+    if (!url) { errorDiv.innerHTML = '<strong><i class="bi bi-exclamation-triangle"></i> Error:</strong> Ingresa una URL'; errorDiv.classList.add('active'); return; }
+    loader.classList.add('active'); errorDiv.classList.remove('active'); resultsDiv.classList.remove('active');
+    try {
+        const fd = new FormData(); fd.append('url', url);
+        const r = await fetch('/api/http-headers', {method: 'POST', body: fd});
+        const d = await r.json();
+        if (d.success) {
+            const badge = d.data.status_code >= 200 && d.data.status_code < 300 ? '<span class="badge-modern badge-success">' + d.data.status_code + '</span>' : d.data.status_code >= 300 && d.data.status_code < 400 ? '<span class="badge-modern badge-info">' + d.data.status_code + '</span>' : '<span class="badge-modern badge-danger">' + d.data.status_code + '</span>';
+            let h = '<div style="padding:15px;background:#f8f9fa;border-radius:8px;margin-bottom:20px"><h5><i class="bi bi-link-45deg"></i> URL: <code>' + d.data.final_url + '</code></h5><p><strong>Código:</strong> ' + badge + '</p></div>';
+            if (d.data.redirect_history.length > 1) {
+                h += '<h5><i class="bi bi-arrow-repeat"></i> Redirecciones</h5><ol>';
+                d.data.redirect_history.forEach(x => h += '<li><code>' + x.url + '</code> → ' + x.status_code + '</li>');
+                h += '</ol>';
             }
-
-            loader.style.display = 'block';
-            resultsDiv.style.display = 'none';
-            errorDiv.style.display = 'none';
-
-            try {
-                const formData = new FormData();
-                formData.append('url', url);
-                const res = await fetch('/api/http-headers', {method: 'POST', body: formData});
-                const data = await res.json();
-                data.success ? showResults(data.data) : showError(data.error);
-            } catch (err) {
-                showError('Error de red. Inténtalo de nuevo.');
-            } finally {
-                loader.style.display = 'none';
-            }
-        }
-
-        function showResults(data) {
-            let statusClass = (data.status_code >= 200 && data.status_code < 300) ? 'text-success' :
-                (data.status_code >= 300 && data.status_code < 400) ? 'text-info' : 'text-danger';
-
-            let redirectHtml = '';
-            if (data.redirect_history.length > 1) {
-                redirectHtml += '<h5><i class="bi bi-arrow-repeat"></i> Cadena de Redirección</h5><ol class="list-group list-group-numbered">';
-                data.redirect_history.forEach(r => {
-                    redirectHtml += `<li class="list-group-item d-flex justify-content-between align-items-start">
-                <div class="ms-2 me-auto">
-                    <div class="fw-bold">${r.url}</div>
-                </div>
-                <span class="badge bg-primary rounded-pill">${r.status_code}</span>
-            </li>`;
-                });
-                redirectHtml += '</ol>';
-            }
-
-            let headersHtml = `<h5><i class="bi bi-card-list"></i> Cabeceras de Respuesta</h5>
-        <table class="table table-sm table-striped">
-            <thead><tr><th>Nombre</th><th>Valor</th></tr></thead>
-            <tbody>`;
-            data.headers.forEach(h => {
-                headersHtml += `<tr>
-            <td class="text-break"><strong>${h.name}</strong></td>
-            <td class="text-break"><code>${escapeHtml(h.value)}</code></td>
-        </tr>`;
-            });
-            headersHtml += `</tbody></table>`;
-
-            document.getElementById('results').innerHTML = `
-        <div class="result-card">
-            <h4>Resultados para <code>${data.final_url}</code></h4>
-            <p><strong>Código de Estado:</strong> <span class="${statusClass} fw-bold">${data.status_code}</span></p>
-            <div class="mt-4">${redirectHtml}</div>
-            <div class="mt-4">${headersHtml}</div>
-        </div>`;
-            document.getElementById('results').style.display = 'block';
-        }
-
-        function showError(msg) {
-            const errorDiv = document.getElementById('error');
-            errorDiv.textContent = msg;
-            errorDiv.style.display = 'block';
-        }
-
-        function escapeHtml(text) {
-            const map = {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'};
-            return text.replace(/[&<>"']/g, m => map[m]);
-        }
-    </script>
-
-    <style>
-        .card-tool {
-            background: var(--card-bg);
-            border-radius: 16px;
-            padding: 40px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-        }
-
-        .tool-header-gradient {
-            font-weight: 700;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .btn-gradient {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            color: white;
-        }
-
-        .btn-gradient:hover {
-            opacity: 0.9;
-        }
-
-        .result-card {
-            background: var(--info-bg);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 25px;
-        }
-
-        .result-card code {
-            color: #d63384;
-            word-break: break-all;
-        }
-
-        .table {
-            color: var(--text-primary);
-        }
-
-        .list-group-item {
-            background-color: var(--card-bg);
-        }
-    </style>
+            h += '<h5 style="margin:25px 0 15px"><i class="bi bi-list-ul"></i> Cabeceras</h5><table class="results-table"><thead><tr><th style="width:30%">Nombre</th><th>Valor</th></tr></thead><tbody>';
+            d.data.headers.forEach(x => h += '<tr><td><strong>' + x.name + '</strong></td><td><code style="word-break:break-all;font-size:0.9rem">' + x.value.replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\\\\':'&#039;'}[m])) + '</code></td></tr>');
+            h += '</tbody></table>';
+            resultsDiv.innerHTML = h; resultsDiv.classList.add('active');
+        } else { errorDiv.innerHTML = '<strong><i class="bi bi-exclamation-triangle"></i> Error:</strong> ' + d.error; errorDiv.classList.add('active'); }
+    } catch (e) { errorDiv.innerHTML = '<strong><i class="bi bi-exclamation-triangle"></i> Error:</strong> Conexión fallida'; errorDiv.classList.add('active'); }
+    finally { loader.classList.remove('active'); }
+}
+</script>
 {% endblock %}
