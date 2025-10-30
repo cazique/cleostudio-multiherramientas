@@ -142,7 +142,8 @@ def md_to_pdf_page():
 @app.route('/compress-pdf')
 def compress_pdf_page():
     """Muestra la página de la herramienta para comprimir PDF."""
-    return render_template('compress_pdf.html')
+    # CAMBIO: compress_pdf.html -> compress-pdf.html
+    return render_template('compress-pdf.html')
 
 @app.route('/merge-pdf')
 def merge_pdf_page():
@@ -162,77 +163,92 @@ def images_to_pdf_page():
 @app.route('/compress-image')
 def compress_image_page():
     """Muestra la página de la herramienta para comprimir imágenes."""
-    return render_template('compress_image.html')
+    # CAMBIO: compress_image.html -> compress-image.html
+    return render_template('compress-image.html')
 
 @app.route('/ip-whois')
 def ip_whois_page():
     """Muestra la página de la herramienta de IP WHOIS."""
-    return render_template('ip_whois.html')
+    # CAMBIO: ip_whois.html -> ip-whois.html
+    return render_template('ip-whois.html')
 
 @app.route('/blacklist-check')
 def blacklist_check_page():
     """Muestra la página de la herramienta de verificación de listas negras."""
-    return render_template('blacklist_check.html')
+    # CAMBIO: blacklist_check.html -> blacklist-check.html
+    return render_template('blacklist-check.html')
 
 @app.route('/ssl-check')
 def ssl_check_page():
     """Muestra la página de la herramienta de verificación de SSL."""
-    return render_template('ssl_check.html')
+    # CAMBIO: ssl_check.html -> ssl-check.html
+    return render_template('ssl-check.html')
 
 @app.route('/port-scanner')
 def port_scanner_page():
     """Muestra la página de la herramienta de escáner de puertos."""
-    return render_template('port_scanner.html')
+    # CAMBIO: port_scanner.html -> port-scanner.html
+    return render_template('port-scanner.html')
 
 @app.route('/http-headers')
 def http_headers_page():
     """Muestra la página de la herramienta para ver cabeceras HTTP."""
-    return render_template('http_headers.html')
+    # CAMBIO: http_headers.html -> http-headers.html
+    return render_template('http-headers.html')
 
 @app.route('/password-generator')
 def password_gen_page():
     """Muestra la página de la herramienta de generación de contraseñas."""
-    return render_template('password_generator.html')
+    # CAMBIO: password_generator.html -> password-generator.html
+    return render_template('password-generator.html')
 
 @app.route('/mx-lookup')
 def mx_lookup_page():
     """Muestra la página de la herramienta de búsqueda de registros MX."""
-    return render_template('mx_lookup.html')
+    # CAMBIO: mx_lookup.html -> mx-lookup.html
+    return render_template('mx-lookup.html')
 
 @app.route('/dns-lookup')
 def dns_lookup_page():
     """Muestra la página de la herramienta de búsqueda de DNS."""
-    return render_template('dns_lookup.html')
+    # CAMBIO: dns_lookup.html -> dns-lookup.html
+    return render_template('dns-lookup.html')
 
 @app.route('/reverse-dns')
 def reverse_dns_page():
     """Muestra la página de la herramienta de búsqueda de DNS inversa."""
-    return render_template('reverse_dns.html')
+    # CAMBIO: reverse_dns.html -> reverse-dns.html
+    return render_template('reverse-dns.html')
 
 @app.route('/whois-lookup')
 def whois_lookup_page():
     """Muestra la página de la herramienta de búsqueda WHOIS."""
-    return render_template('whois_lookup.html')
+    # CAMBIO: whois_lookup.html -> whois-lookup.html
+    return render_template('whois-lookup.html')
 
 @app.route('/spf-check')
 def spf_check_page():
     """Muestra la página de la herramienta de verificación de SPF."""
-    return render_template('spf_check.html')
+    # CAMBIO: spf_check.html -> spf-check.html
+    return render_template('spf-check.html')
 
 @app.route('/dkim-check')
 def dkim_check_page():
     """Muestra la página de la herramienta de verificación de DKIM."""
-    return render_template('dkim_check.html')
+    # CAMBIO: dkim_check.html -> dkim-check.html
+    return render_template('dkim-check.html')
 
 @app.route('/dmarc-check')
 def dmarc_check_page():
     """Muestra la página de la herramienta de verificación de DMARC."""
-    return render_template('dmarc_check.html')
+    # CAMBIO: dmarc_check.html -> dmarc-check.html
+    return render_template('dmarc-check.html')
 
 @app.route('/email-header')
 def email_header_page():
     """Muestra la página de la herramienta para analizar cabeceras de correo electrónico."""
-    return render_template('email_header.html')
+    # CAMBIO: email_header.html -> email-header.html
+    return render_template('email-header.html')
 
 # Manejo de errores
 @app.errorhandler(404)
